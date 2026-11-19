@@ -74,6 +74,12 @@ export function dietOf(ingredients) {
   return 'vegetar';
 }
 
+// Arla's image service resizes on request: the card is at most ~400 px wide on a phone
+// (×1.5 for sharp screens), so 600×840 at quality 70 keeps photos well under 150 kB.
+const sizedImage = (url) => url?.includes('images.arla.com')
+  ? url.replace(/width=\d+&height=\d+/, 'width=600&height=840').replace(/&quality=\d+/, '') + '&quality=70'
+  : url;
+
 const hueOf = (hex) => {
   if (!hex) return 30;
   const [r, g, b] = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
@@ -109,7 +115,7 @@ for (const r of raw) {
     ingredients,
     steps: text.steps,
     source: { name: r.siteName, url: r.url },
-    image: colors[r.id] && colors[r.id].status !== 200 ? null : r.image,
+    image: colors[r.id] && colors[r.id].status !== 200 ? null : sizedImage(r.image),
     color: colors[r.id]?.color ?? r.color, tags: text.tags ?? []
   });
 }
