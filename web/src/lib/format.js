@@ -30,6 +30,9 @@ export function qty(need, ing) {
   return `${num1.format(n)} ${label}`;
 }
 
+// A partly covered ingredient: "500 g af 600 g kartofler".
+export const partLabel = ({ have, need }, ing) => `${qty(have, ing)} af ${qty(need, ing)} ${ing.name}`;
+
 // Size of one pack as printed in the avis.
 export function packSize(amount, ing) {
   if (ing.unit === 'g') return amount >= 1000 ? `${num1.format(amount / 1000)} kg` : `${Math.round(amount)} g`;

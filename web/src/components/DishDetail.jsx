@@ -2,7 +2,7 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { DishArt } from './ui.jsx';
 import { X, Heart, Minus, Plus, Clock, Tag, Check } from './icons.jsx';
 import { DIET_LABEL } from './SwipeView.jsx';
-import { priceDish, isExact, addedCost } from '../lib/pricing.js';
+import { priceDish, isExact, coverage } from '../lib/pricing.js';
 import { kr, krSmall, qty, capitalize, sourceParts } from '../lib/format.js';
 import { layoutWeek, DAY_SHORT, DAY_NAMES } from '../lib/week.js';
 
@@ -18,7 +18,7 @@ const groupByCategory = (lines) =>
 
 // Full-screen dish view: the photo fills the screen and a frosted glass panel
 // holds everything about the dish. mode: 'add' (from the deck) or 'edit' (from the week).
-export function DishDetail({ data, recipe, item, mode, prefs, plan, saved, onToggleSave, onConfirm, onReplace, onRemove, onClose }) {
+export function DishDetail({ data, recipe, item, mode, prefs, plan, week = {}, saved, onToggleSave, onConfirm, onReplace, onRemove, onClose }) {
   const [days, setDays] = useState(item?.days ?? 1);
   const [people, setPeople] = useState(item?.people ?? prefs.people);
   const [staples, setStaples] = useState(item?.staples ?? []);
@@ -59,12 +59,19 @@ export function DishDetail({ data, recipe, item, mode, prefs, plan, saved, onTog
     };
   }, [onClose]);
 
-  const price = priceDish(data, recipe, { people, days, staples, atHome: prefs.atHome, stores: prefs.stores });
-  // Next to the dishes already in the week, packs are shared: only what is not
-  // already bought counts (the carrots left in the bag are free).
-  const extraCost = mode === 'add' && plan.length > 0
-    ? addedCost(data, plan, { recipeId: recipe.id, people, days, staples }, { stores: prefs.stores, atHome: prefs.atHome })
-    : null;
+  // A new dish can only use what the week's dishes leave of Hjemme.
+  const adding = mode === 'add';
+  const price = priceDish(data, recipe, { people, days, staples, atHome: adding ? week.homeLeft ?? prefs.atHome : prefs.atHome, stores: prefs.stores });
+  // Next to the dishes already in the week, packs are shared: what is left in the
+  // bags is used first, and only the rest is bought (500 g of the 600 g potatoes).
+  const cov = useMemo(
+    () => (adding && plan.length > 0
+      ? coverage(data, plan, { recipeId: recipe.id, people, days, staples }, { stores: prefs.stores, atHome: prefs.atHome, adjust: week.adjust })
+      : null),
+    [adding, data, plan, recipe.id, people, days, staples, prefs.stores, prefs.atHome, week.adjust]
+  );
+  const extraCost = cov ? cov.total : null;
+  const fromWeek = Object.fromEntries((cov?.lines ?? []).filter((l) => l.fromWeek > 0).map((l) => [l.id, l]));
   const sharesPacks = extraCost != null && extraCost < price.total - 0.5;
   const bought = price.lines.filter((l) => !l.staple);
   const stapleLines = price.lines.filter((l) => l.staple);
@@ -139,7 +146,7 @@ export function DishDetail({ data, recipe, item, mode, prefs, plan, saved, onTog
                 <ul className="ing-boxes">
                   {g.lines.map((l) => (
                     <li key={l.id} className={`ing-box ${l.source ? '' : 'is-home'} ${isTilbud(l) ? 'is-tilbud' : ''}`}>
-                      <IngredientBody line={l} storesById={storesById} />
+                      <IngredientBody line={l} storesById={storesById} week={fromWeek[l.id]} />
                     </li>
                   ))}
                 </ul>
@@ -159,7 +166,7 @@ export function DishDetail({ data, recipe, item, mode, prefs, plan, saved, onTog
                           aria-pressed={on} onClick={() => toggleStaple(l.id)}
                         >
                           {on ? (
-                            <IngredientBody line={l} storesById={storesById} />
+                            <IngredientBody line={l} storesById={storesById} week={fromWeek[l.id]} />
                           ) : (
                             <>
                               <span className="box-name">{capitalize(l.ing.name)}</span>
@@ -267,8 +274,24 @@ function ReplacePicker({ data, recipe, plan, prefs, staples, onPick, onCancel })
 }
 
 // One ingredient: name, amount, where to buy it and what it costs.
-function IngredientBody({ line, storesById }) {
+// week: how much of it the rest from the week's bags covers, when adding a dish.
+function IngredientBody({ line, storesById, week }) {
   const { source } = line;
+  if (week) {
+    return (
+      <>
+        <span className="box-name">{capitalize(line.ing.name)}</span>
+        <span className="box-qty">{qty(line.need, line.ing)}</span>
+        <span className="box-note">
+          {week.buy > 0 ? `${qty(week.fromWeek, line.ing)} fra ugens indkøb · køb ${qty(week.buy, line.ing)}` : 'Fra ugens indkøb'}
+        </span>
+        <span className="box-foot">
+          <span className="box-src" />
+          <span className="box-price">{week.cost < 0.5 ? 'Gratis' : `+${kr(week.cost)}`}</span>
+        </span>
+      </>
+    );
+  }
   if (!source) {
     return (
       <>

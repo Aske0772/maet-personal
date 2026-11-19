@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { cheapest, priceDish, shoppingList, isOnOffer, isExact, addedCost, suggestions } from './pricing.js';
+import { cheapest, priceDish, shoppingList, isOnOffer, isExact, addedCost, suggestions, coverage, keepAdjust } from './pricing.js';
 
 const data = {
   ingredients: {
@@ -125,7 +125,9 @@ describe('shared packs', () => {
   it('suggests dishes that use what is already on the list', () => {
     const out = suggestions(data, [plan[0]], { stores: ['netto'], people: 4 });
     expect(out.map((s) => s.recipe.id)).toEqual(['wok']); // shares chicken and onions; risret shares only rice
-    expect(out[0].shared).toEqual(['kylling', 'loeg']);
+    // Karry leaves 200 g in the second chicken pack: wok's 400 g is only half covered.
+    expect(out[0].shared).toEqual(['loeg']);
+    expect(out[0].partial).toEqual([{ id: 'kylling', have: 200, need: 400 }]);
     expect(suggestions(data, [], { stores: ['netto'] })).toEqual([]);
   });
 });
@@ -215,5 +217,87 @@ describe('Hjemme (amounts at home)', () => {
     // Fully covered goes to "Har hjemme".
     const covered = shoppingList(data, plan, { stores, atHome: { kylling: 2000 } });
     expect(covered.home.map((i) => i.id)).toContain('kylling');
+  });
+});
+
+describe('rester fra ugens indkøb', () => {
+  const kart = {
+    ingredients: {
+      kartofler: { name: 'kartofler', unit: 'g', cat: 'gront', staple: false, normal: [1000, 15] },
+      loeg: { name: 'løg', unit: 'stk', cat: 'gront', staple: false, normal: [10, 12] },
+      floede: { name: 'fløde', unit: 'ml', cat: 'mejeri', staple: false, normal: [250, 12] }
+    },
+    offers: {
+      kartofler: [{ id: 'k', store: 'rema', price: 15, amount: 1000, kind: 'hylde' }],
+      loeg: [{ id: 'l', store: 'rema', price: 10, amount: 10, kind: 'hylde' }],
+      floede: [{ id: 'f', store: 'rema', price: 12, amount: 250, kind: 'hylde' }]
+    },
+    recipes: [
+      { id: 'a', title: 'A', serves: 2, hero: [], ingredients: [{ id: 'kartofler', qty: 500 }, { id: 'loeg', qty: 1 }] },
+      { id: 'b', title: 'B', serves: 2, hero: [], ingredients: [{ id: 'kartofler', qty: 600 }, { id: 'loeg', qty: 1 }] },
+      { id: 'c', title: 'C', serves: 2, hero: [], ingredients: [{ id: 'kartofler', qty: 400 }, { id: 'loeg', qty: 1 }] },
+      { id: 'd', title: 'D', serves: 2, hero: [], ingredients: [{ id: 'kartofler', qty: 300 }, { id: 'floede', qty: 200 }] }
+    ]
+  };
+  const plan = [{ id: 'p1', recipeId: 'a', people: 2, days: 1, staples: [] }];
+  const opts = { stores: ['rema'] };
+  const item = (recipeId) => ({ recipeId, people: 2, days: 1, staples: [] });
+
+  it('knows what is left in the bag', () => {
+    const list = shoppingList(kart, plan, opts);
+    expect(list.spare.kartofler).toBe(500);
+    expect(list.spareFrom.kartofler).toBe('week');
+    expect(list.spare.loeg).toBe(9);
+  });
+
+  it('600 g next to 500 g left: 500 g from the bag, 100 g and a new bag bought', () => {
+    const cov = coverage(kart, plan, item('b'), opts);
+    const k = cov.lines.find((l) => l.id === 'kartofler');
+    expect(k).toMatchObject({ need: 600, fromWeek: 500, fromHome: 0, buy: 100, cost: 15 });
+    expect(cov.total).toBe(15);
+    const s = suggestions(kart, plan, { ...opts, limit: Infinity }).find((x) => x.recipe.id === 'b');
+    expect(s.shared).toEqual(['loeg']);
+    expect(s.partial).toEqual([{ id: 'kartofler', have: 500, need: 600 }]);
+    expect(s.cost).toBe(15);
+  });
+
+  it('400 g next to 500 g left is fully covered and free', () => {
+    const cov = coverage(kart, plan, item('c'), opts);
+    expect(cov.lines.find((l) => l.id === 'kartofler')).toMatchObject({ fromWeek: 400, buy: 0, cost: 0 });
+    const s = suggestions(kart, plan, { ...opts, limit: Infinity }).find((x) => x.recipe.id === 'c');
+    expect(s.shared).toEqual(['kartofler', 'loeg']);
+    expect(s.partial).toEqual([]);
+    expect(s.cost).toBe(0);
+  });
+
+  it('an extra bag from + on the list covers the 600 g dish', () => {
+    const s = suggestions(kart, plan, { ...opts, adjust: { kartofler: 1 }, limit: Infinity }).find((x) => x.recipe.id === 'b');
+    expect(s.shared).toContain('kartofler');
+    expect(s.cost).toBe(0);
+    // Adding the dish turns the extra bag into the one it needs: still two bags.
+    const two = [...plan, { id: 'p2', ...item('b') }];
+    const adjust = keepAdjust(kart, plan, two, { ...opts, adjust: { kartofler: 1 } });
+    expect(adjust).toEqual({});
+    expect(shoppingList(kart, two, { ...opts, adjust }).needs.kartofler.bought).toBe(2000);
+    // Two extra bags: one is still extra afterwards.
+    expect(keepAdjust(kart, plan, two, { ...opts, adjust: { kartofler: 2 } })).toEqual({ kartofler: 1 });
+  });
+
+  it('a second dish uses up the rest, so the next suggestion sees less', () => {
+    const two = [...plan, { id: 'p2', ...item('d') }];
+    const list = shoppingList(kart, two, opts);
+    expect(list.spare.kartofler).toBe(200);
+    const s = suggestions(kart, two, { ...opts, minShared: 1, limit: Infinity }).find((x) => x.recipe.id === 'c');
+    expect(s.partial).toEqual([{ id: 'kartofler', have: 200, need: 400 }]);
+  });
+
+  it('Hjemme counts only what the week leaves of it', () => {
+    const list = shoppingList(kart, [{ id: 'p', recipeId: 'b', people: 2, days: 1, staples: [] }], { ...opts, atHome: { kartofler: 1000 } });
+    expect(list.spare.kartofler).toBe(400);
+    expect(list.spareFrom.kartofler).toBe('home');
+    // Unused Hjemme stays whole; "har nok" stays har nok.
+    const l2 = shoppingList(kart, plan, { ...opts, atHome: { floede: 250, loeg: Infinity } });
+    expect(l2.spare.floede).toBe(250);
+    expect(l2.spare.loeg).toBe(Infinity);
   });
 });

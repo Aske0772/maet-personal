@@ -56,12 +56,67 @@ export function migrateAtHome(prefs) {
   return { ...prefs, pantry, atHome: [] };
 }
 
-// Dishes that use what you have, most of it first: how many pantry ingredients a
-// dish uses (basisvarer don't count) and which.
-export function usesPantry(recipe, pantry, ingredients) {
+// Amount in the ingredient's own unit → amount in `unit` (the inverse of toOwnUnit).
+export function fromOwnUnit(amount, unit, ing) {
+  if (unit === ing.unit || !unit) return amount;
+  if (unit === 'g' && ing.unit === 'stk' && ing.gPerStk) return amount * ing.gPerStk;
+  if (unit === 'stk' && ing.unit === 'g' && ing.gPerStk) return amount / ing.gPerStk;
+  return amount;
+}
+
+// Which of a dish's ingredients (basisvarer don't count) what you have covers.
+// `have` is { id: amount in own unit } – Hjemme, or what is left of it once the
+// week's dishes are made. With `people`, an ingredient only counts when there is
+// enough of it for the dish at that size; without, any amount counts.
+export function usesPantry(recipe, have, ingredients, people = null) {
+  const factor = people ? people / recipe.serves : 0;
   return recipe.ingredients
-    .map(({ id }) => id)
-    .filter((id) => pantry[id] && !ingredients[id]?.staple);
+    .filter(({ id, qty }) => have[id] > 0 && !ingredients[id]?.staple && (!people || have[id] + 1e-6 >= qty * factor))
+    .map(({ id }) => id);
+}
+
+const roundFor = (unit) => (unit === 'stk' ? (x) => Math.round(x * 10) / 10 : (x) => Math.round(x));
+
+// A new avis week: the old week's dishes are taken as made. What they took from
+// Hjemme comes off it, and what is left of every bag you ticked off as bought
+// goes into it. Untouched Hjemme entries and "har nok" stay as they are.
+// week: { plan, checked, bought: { id: amount bought, own unit } }; `fallback`
+// gives what the list bought (list.needs) for ticks made before `bought` existed.
+// Returns the new pantry and what was added, for a note in Hjemme.
+export function carryOver(data, week, pantry = {}, fallback = {}) {
+  const recipes = Object.fromEntries(data.recipes.map((r) => [r.id, r]));
+  const need = {};
+  for (const item of week.plan ?? []) {
+    const recipe = recipes[item.recipeId];
+    if (!recipe) continue;
+    const factor = (item.people * item.days) / recipe.serves;
+    for (const { id, qty } of recipe.ingredients) {
+      const ing = data.ingredients[id];
+      if (!ing || (ing.staple && !item.staples?.includes(id))) continue;
+      need[id] = (need[id] ?? 0) + qty * factor;
+    }
+  }
+  const out = { ...pantry };
+  const added = [];
+  const checked = new Set(week.checked ?? []);
+  for (const [id, n] of Object.entries(need)) {
+    const ing = data.ingredients[id];
+    const entry = pantry[id];
+    if (entry?.amount === null) continue; // har nok
+    const have = entry ? toOwnUnit(entry.amount, entry.unit, ing) : 0;
+    const used = Math.min(n, have);
+    let left = have - used;
+    const bought = checked.has(id) ? (week.bought?.[id] ?? fallback[id]?.bought ?? 0) : 0;
+    const rest = Math.max(0, bought - (n - used));
+    left += rest;
+    const unit = entry?.unit ?? ing.unit;
+    const amount = roundFor(unit)(fromOwnUnit(left, unit, ing));
+    if (amount > 0) out[id] = { amount, unit };
+    else delete out[id];
+    const shown = roundFor(unit)(fromOwnUnit(rest, unit, ing));
+    if (shown > 0) added.push({ id, amount: shown, unit });
+  }
+  return { pantry: out, added };
 }
 
 export function formatAmount(amount, unit) {

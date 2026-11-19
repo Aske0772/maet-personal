@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchWeek } from './lib/api.js';
 import { usePersistent } from './lib/persist.js';
-import { shoppingList } from './lib/pricing.js';
+import { keepAdjust, shoppingList } from './lib/pricing.js';
 import { archiveWeek } from './lib/rank.js';
 import { moveItem } from './lib/week.js';
 import { Onboarding } from './components/Onboarding.jsx';
@@ -10,7 +10,7 @@ import { DishDetail } from './components/DishDetail.jsx';
 import { WeekView } from './components/WeekView.jsx';
 import { ListView } from './components/ListView.jsx';
 import { HomeView } from './components/HomeView.jsx';
-import { migrateAtHome, pantryAmounts } from './lib/pantry.js';
+import { carryOver, migrateAtHome, pantryAmounts } from './lib/pantry.js';
 import { StorePicker } from './components/StorePicker.jsx';
 import { Sheet, Stepper } from './components/ui.jsx';
 import { Cards, Calendar, List, Home } from './components/icons.jsx';
@@ -21,7 +21,9 @@ const PREFS = { onboarded: false, stores: [], people: 2, diet: 'alle', atHome: [
 // extras: products added by hand in "Tilføj vare" ({ id, store, title, price, amount, unit, kind, until, qty }).
 // plan items: { id, recipeId, days, people, staples, day? } – day 0 = Monday, see lib/week.js.
 // adjust: packs bought beyond what the dishes need, per ingredient (+ and − on the list).
-const WEEK = { week: null, plan: [], seen: [], checked: [], extras: [], adjust: {} };
+// bought: what the list bought of an ingredient when it was ticked off, so the rest
+// of the bag can go into Hjemme when the week ends.
+const WEEK = { week: null, plan: [], seen: [], checked: [], extras: [], adjust: {}, bought: {} };
 // Dishes planned in earlier weeks, so the deck can rest them for a while. Stays on the phone.
 const PAST = { weeks: {} };
 
@@ -75,13 +77,29 @@ export default function App() {
     if (!data || state.week === data.week) return;
     // A new avis week: remember what was planned before starting fresh.
     setPast((p) => archiveWeek(p, state.week, state.plan.map((i) => i.recipeId)));
+    // The old week's dishes count as made: what they used comes off Hjemme, and
+    // the rest of every bag ticked off as bought goes into it.
+    if (state.week && state.plan.length) {
+      const old = shoppingList(data, state.plan, { stores: prefs.stores, atHome: prefs.atHome, adjust: state.adjust });
+      setPrefs((p) => {
+        const { pantry, added } = carryOver(data, state, p.pantry ?? {}, old.needs);
+        return { ...p, pantry, carried: added.length ? { week: data.week, items: added } : null };
+      });
+    }
     setState({ ...WEEK, week: data.week });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data, state.week, state.plan, setState, setPast]);
 
   const list = useMemo(
     () => (data ? shoppingList(data, state.plan, { stores: prefs.stores, atHome: prefs.atHome, extras: state.extras, adjust: state.adjust }) : null),
     [data, state.plan, prefs.stores, prefs.atHome, state.extras, state.adjust]
   );
+  // What is left of Hjemme once the week's dishes are made: what new dishes can use.
+  const homeLeft = useMemo(() => {
+    if (!list) return home;
+    return Object.fromEntries(Object.entries(list.spare).filter(([id]) => list.spareFrom[id] === 'home'));
+  }, [list, home]);
+  const week = { adjust: state.adjust, homeLeft };
 
   const markSeen = (id) => setState((s) => ({ ...s, seen: [...s.seen, id] }));
   const unSee = (id) => setState((s) => ({ ...s, seen: s.seen.filter((x) => x !== id) }));
@@ -118,7 +136,9 @@ export default function App() {
         : [...s.plan, { id, recipeId: recipe.id, days, people, staples }];
       if (day != null) plan = moveItem(plan, id, day);
       const seen = s.seen.includes(recipe.id) ? s.seen : [...s.seen, recipe.id];
-      return { ...s, plan, seen };
+      // Extra packs from + become the new dish's packs, as its price promised.
+      const adjust = item ? s.adjust : keepAdjust(data, s.plan, plan, { stores: prefs.stores, atHome: prefs.atHome, adjust: s.adjust });
+      return { ...s, plan, seen, adjust };
     });
     setSheet(null);
   };
@@ -212,7 +232,7 @@ export default function App() {
       <main className="main" ref={mainRef}>
         {tab === 'swipe' && (
           <SwipeView
-            data={data} prefs={prefs} setPrefs={setPrefs} plan={state.plan} seen={state.seen} past={past}
+            data={data} prefs={prefs} setPrefs={setPrefs} plan={state.plan} seen={state.seen} past={past} week={week}
             budgetLeft={prefs.budget && list ? prefs.budget - list.total : null}
             onSkip={onSkip} onLike={onLike} onUndo={onUndo} canUndo={history.length > 0}
             onOpen={(recipe) => setSheet({ recipe, mode: 'add' })}
@@ -222,7 +242,7 @@ export default function App() {
         )}
         {tab === 'week' && (
           <WeekView
-            data={data} plan={state.plan} prefs={prefs} list={list} scroller={mainRef}
+            data={data} plan={state.plan} prefs={prefs} list={list} scroller={mainRef} week={week}
             onOpen={(recipe, item) => setSheet({ recipe, item, mode: 'edit' })}
             onMove={(id, day) => setState((s) => ({ ...s, plan: moveItem(s.plan, id, day) }))}
             onSuggest={(recipe) => setSheet({ recipe, mode: 'add' })}
@@ -234,13 +254,19 @@ export default function App() {
           <ListView
             data={data} list={list} checked={state.checked} stores={prefs.stores}
             countOf={countOf} onStep={step} onStepProduct={stepProduct}
-            onCheck={(id) => setState((s) => ({ ...s, checked: toggleIn(s.checked, id) }))}
+            onCheck={(id) => setState((s) => {
+              const bought = { ...(s.bought ?? {}) };
+              if (s.checked.includes(id)) delete bought[id];
+              else if (list.needs[id]) bought[id] = list.needs[id].bought;
+              return { ...s, checked: toggleIn(s.checked, id), bought };
+            })}
             onBackHome={(id) => setPantry((pantry) => { const next = { ...pantry }; delete next[id]; return next; })}
           />
         )}
         {tab === 'home' && (
           <HomeView
-            data={data} prefs={prefs} pantry={storedPrefs.pantry ?? {}} onChange={setPantry}
+            data={data} prefs={prefs} pantry={storedPrefs.pantry ?? {}} onChange={setPantry} week={week}
+            carried={storedPrefs.carried} onDismissCarried={() => setPrefs((p) => ({ ...p, carried: null }))}
             onOpen={(recipe) => setSheet({ recipe, mode: 'add' })}
           />
         )}
@@ -256,7 +282,7 @@ export default function App() {
       {sheet && (
         <DishDetail
           key={sheet.recipe.id + (sheet.item?.id ?? '')}
-          data={data} recipe={sheet.recipe} item={sheet.item} mode={sheet.mode} prefs={prefs} plan={state.plan}
+          data={data} recipe={sheet.recipe} item={sheet.item} mode={sheet.mode} prefs={prefs} plan={state.plan} week={week}
           saved={prefs.saved.includes(sheet.recipe.id)}
           onToggleSave={() => setPrefs((p) => ({ ...p, saved: toggleIn(p.saved, sheet.recipe.id) }))}
           onConfirm={confirm} onReplace={replace} onRemove={remove} onClose={closeSheet}

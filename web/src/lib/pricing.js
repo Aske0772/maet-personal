@@ -204,11 +204,34 @@ export function shoppingList(data, plan, { stores, atHome = [], extras = [], adj
   };
   const sorted = [...groups.values()].sort((a, b) => order(a.key) - order(b.key));
 
+  // spare: what is left once the week's dishes are made, per ingredient in its own
+  // unit – the rest of a bought bag (spareFrom 'week') or of Hjemme ('home').
+  // Infinity = "har nok". A new dish can only count on this much.
+  const spare = {};
+  const spareFrom = {};
+  for (const [id, amount] of Object.entries(home)) {
+    if (amount > EPS) { spare[id] = amount; spareFrom[id] = 'home'; }
+  }
+  for (const h of fromHome) {
+    const left = haveOf(home, h.id) - h.need;
+    if (left > EPS) spare[h.id] = left;
+    else delete spare[h.id];
+  }
+  for (const i of items) {
+    const left = i.source.packs * i.source.packSize + i.fromHome - i.need;
+    if (left > EPS) { spare[i.id] = left; spareFrom[i.id] = 'week'; }
+    else { delete spare[i.id]; delete spareFrom[i.id]; }
+  }
+  for (const id of Object.keys(spareFrom)) if (!(id in spare)) delete spareFrom[id];
+
   const total = dishTotal + extrasTotal;
   return {
     total, dishTotal, extrasTotal, approx, meals, perMeal: meals ? dishTotal / meals : 0, groups: sorted, home: fromHome, shares,
-    // Needs per ingredient and what was bought for them, for suggestions.
-    needs: Object.fromEntries(items.map((i) => [i.id, { need: i.need, bought: i.source.packs * i.source.packSize }]))
+    // Needs per ingredient and what was bought for them (after + and −).
+    needs: Object.fromEntries(items.map((i) => [i.id, { need: i.need, bought: i.source.packs * i.source.packSize }])),
+    costs: Object.fromEntries(items.map((i) => [i.id, i.source.cost])),
+    packSizes: Object.fromEntries(items.map((i) => [i.id, i.source.packSize])),
+    spare, spareFrom
   };
 }
 
@@ -220,26 +243,81 @@ export function addedCost(data, plan, newItem, opts) {
   return Math.max(0, after - before);
 }
 
-// Dishes that use what the week already buys. For every dish not in the plan:
-// which of its ingredients are already on the list, and what it adds to the bill
-// for one evening. Only dishes that share at least `minShared` ingredients count;
+// Where each ingredient of a new dish comes from next to the week: the rest of a
+// bag the week already buys (fromWeek), Hjemme (fromHome), or the shop (buy), and
+// what the shop part adds to the bill (cost). 600 g potatoes next to a dish that
+// leaves 500 g in the bag: fromWeek 500, buy 100, cost = whatever the list now
+// buys on top. `base` is the list without the dish, when the caller has it.
+export function coverage(data, plan, newItem, opts, base = shoppingList(data, plan, opts)) {
+  const recipe = data.recipes.find((r) => r.id === newItem.recipeId);
+  if (!recipe) return { lines: [], total: 0 };
+  const next = [...plan, { id: '__new', ...newItem }];
+  const adjust = keepAdjust(data, plan, next, opts, base);
+  const after = shoppingList(data, next, { ...opts, adjust });
+  const factor = (newItem.people * newItem.days) / recipe.serves;
+  const byId = new Map();
+  for (const { id, qty } of recipe.ingredients) {
+    const ing = data.ingredients[id];
+    if (ing.staple && !newItem.staples?.includes(id)) continue;
+    const line = byId.get(id) ?? { id, ing, need: 0 };
+    line.need += qty * factor;
+    byId.set(id, line);
+  }
+  const lines = [...byId.values()].map((l) => {
+    const covered = Math.min(l.need, base.spare[l.id] ?? 0);
+    const fromHome = base.spareFrom[l.id] === 'home' ? covered : 0;
+    const buy = Math.max(0, l.need - covered);
+    const cost = Math.max(0, (after.costs[l.id] ?? 0) - (base.costs[l.id] ?? 0));
+    return { ...l, fromWeek: covered - fromHome, fromHome, buy: buy > 1e-6 ? buy : 0, cost };
+  });
+  // total, not dishTotal: extra packs from + count as bought.
+  return { lines, total: Math.max(0, after.total - base.total) };
+}
+
+// + on the list buys packs beyond what the dishes need. When a new dish needs
+// them, they become its packs instead of extra ones: 1 kg potatoes + 1 extra bag,
+// then a 600 g dish → still two bags, no longer one of them extra. Returns the
+// adjust to use for `next` (the plan with the new dish). − is left as it is.
+export function keepAdjust(data, plan, next, opts, base = shoppingList(data, plan, opts)) {
+  const adjust = opts.adjust ?? {};
+  if (!Object.values(adjust).some((d) => d > 0)) return adjust;
+  const raw = shoppingList(data, next, { ...opts, adjust: {} });
+  const out = {};
+  for (const [id, d] of Object.entries(adjust)) {
+    if (!(d > 0) || !base.needs[id] || !raw.needs[id]) { if (d) out[id] = d; continue; }
+    const size = raw.packSizes[id];
+    const extra = Math.floor((base.needs[id].bought - raw.needs[id].bought) / size + EPS);
+    if (extra > 0) out[id] = extra;
+  }
+  return out;
+}
+
+// A partly covered ingredient only counts when the rest covers a real part of it.
+const PARTIAL_SHARE = 0.25;
+
+// Dishes that use what the week leaves over. For every dish not in the plan: which
+// ingredients the rest covers fully (shared), which only partly (partial: have
+// of need, the shop buys the difference), and what it adds to the bill for one
+// evening. Only dishes with at least `minShared` such ingredients count;
 // cheapest per portion first.
-export function suggestions(data, plan, { stores, atHome = [], people = 2, filter = () => true, minShared = 2, limit = 3 }) {
+export function suggestions(data, plan, { stores, atHome = [], adjust = {}, people = 2, filter = () => true, minShared = 2, limit = 3 }) {
   if (plan.length === 0) return [];
-  const opts = { stores, atHome };
-  const home = homeMap(atHome);
+  const opts = { stores, atHome, adjust };
   const base = shoppingList(data, plan, opts);
   const planned = new Set(plan.map((p) => p.recipeId));
   const out = [];
   for (const recipe of data.recipes) {
     if (planned.has(recipe.id) || !filter(recipe)) continue;
-    const shared = recipe.ingredients
-      .map(({ id }) => id)
-      .filter((id) => !data.ingredients[id].staple && (base.needs[id] || haveOf(home, id) > 0));
-    if (shared.length < minShared) continue;
-    const after = shoppingList(data, [...plan, { id: '__new', recipeId: recipe.id, people, days: 1, staples: [] }], opts);
-    const cost = Math.max(0, after.dishTotal - base.dishTotal);
-    out.push({ recipe, shared, cost, perMeal: cost / people });
+    const quick = recipe.ingredients.filter(({ id }) => !data.ingredients[id].staple && base.spare[id] > 0).length;
+    if (quick < minShared) continue;
+    const cov = coverage(data, plan, { recipeId: recipe.id, people, days: 1, staples: [] }, opts, base);
+    const lines = cov.lines.filter((l) => !l.ing.staple);
+    const shared = lines.filter((l) => l.buy === 0).map((l) => l.id);
+    const partial = lines
+      .filter((l) => l.buy > 0 && l.fromWeek + l.fromHome >= PARTIAL_SHARE * l.need)
+      .map((l) => ({ id: l.id, have: l.fromWeek + l.fromHome, need: l.need }));
+    if (shared.length + partial.length < minShared) continue;
+    out.push({ recipe, shared, partial, cost: cov.total, perMeal: cov.total / people });
   }
   return out.sort((a, b) => a.perMeal - b.perMeal || b.shared.length - a.shared.length).slice(0, limit);
 }

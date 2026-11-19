@@ -2,13 +2,13 @@ import { useLayoutEffect, useRef } from 'react';
 import { DishArt } from './ui.jsx';
 import { Chevron } from './icons.jsx';
 import { priceDish, suggestions } from '../lib/pricing.js';
-import { kr, krSmall, updatedLabel, andList } from '../lib/format.js';
+import { kr, krSmall, updatedLabel, andList, partLabel } from '../lib/format.js';
 import { layoutWeek, weekMonday, DAY_SHORT, DAY_NAMES } from '../lib/week.js';
 import { useHoldDrag } from '../lib/useHoldDrag.js';
 
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, onSuggest, onSwipe, onBudget }) {
+export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, onSuggest, onSwipe, onBudget, week = {} }) {
   const recipes = Object.fromEntries(data.recipes.map((r) => [r.id, r]));
   const { starts, unplaced } = layoutWeek(plan);
   const placed = plan.filter((p) => starts[p.id] != null);
@@ -24,7 +24,7 @@ export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, on
 
   // Dishes that reuse what the week already buys, for one evening at the usual head count.
   const ideas = suggestions(data, plan, {
-    stores: prefs.stores, atHome: prefs.atHome, people: prefs.people,
+    stores: prefs.stores, atHome: prefs.atHome, adjust: week.adjust, people: prefs.people,
     filter: (r) => !prefs.diet || prefs.diet === 'alle' || r.diet === prefs.diet
   });
 
@@ -158,13 +158,20 @@ export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, on
             <section className="shop-group" aria-label="Brug det, du allerede har">
               <h2 className="shop-group-title"><span>Brug det, du allerede har</span></h2>
               <ul className="suggest-list">
-                {ideas.map(({ recipe, shared, cost, perMeal }) => (
+                {ideas.map(({ recipe, shared, partial, cost, perMeal }) => (
                   <li key={recipe.id}>
                     <button type="button" className="suggest-item" onClick={() => onSuggest(recipe)}>
                       <DishArt recipe={recipe} className="suggest-art" />
                       <span className="shop-text">
                         <span className="shop-name">{recipe.title}</span>
-                        <span className="suggest-have">Du har allerede {andList(shared.map((id) => data.ingredients[id].name))}</span>
+                        {shared.length > 0 && (
+                          <span className="suggest-have">Du har allerede {andList(shared.map((id) => data.ingredients[id].name))}</span>
+                        )}
+                        {partial.length > 0 && (
+                          <span className="suggest-part">
+                            Du har {andList(partial.map((p) => partLabel(p, data.ingredients[p.id])))} · resten købes
+                          </span>
+                        )}
                       </span>
                       <span className="suggest-price">
                         <strong>{cost < 0.5 ? 'Gratis' : `+${kr(cost)}`}</strong>

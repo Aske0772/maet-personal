@@ -11,7 +11,7 @@ const IDEAS = 6;
 
 // Hjemme: what's in the cupboard. Search an ingredient (or a product that is one),
 // set how much you have, and the dishes use it first: their price leaves it out.
-export function HomeView({ data, prefs, pantry, onChange, onOpen }) {
+export function HomeView({ data, prefs, pantry, onChange, onOpen, week = {}, carried = null, onDismissCarried }) {
   const [query, setQuery] = useState('');
   const [catalog, setCatalog] = useState(null);
   const [loadError, setLoadError] = useState('');
@@ -61,16 +61,18 @@ export function HomeView({ data, prefs, pantry, onChange, onOpen }) {
   };
 
   // Dishes that use the most of what you have, cheapest per portion after it.
-  const amounts = useMemo(() => pantryAmounts(pantry, ings), [pantry, ings]);
+  // Only what the week's dishes leave over counts.
+  const all = useMemo(() => pantryAmounts(pantry, ings), [pantry, ings]);
+  const amounts = week.homeLeft ?? all;
   const ideas = useMemo(() => {
-    if (!Object.keys(pantry).length) return [];
+    if (!Object.keys(amounts).length) return [];
     return data.recipes
-      .map((recipe) => ({ recipe, uses: usesPantry(recipe, pantry, ings) }))
+      .map((recipe) => ({ recipe, uses: usesPantry(recipe, amounts, ings) }))
       .filter((x) => x.uses.length > 0)
       .map((x) => ({ ...x, price: portionPrice(data, x.recipe, prefs.stores, prefs.people, amounts) }))
       .sort((a, b) => b.uses.length - a.uses.length || a.price - b.price)
       .slice(0, IDEAS);
-  }, [data, pantry, ings, amounts, prefs.stores, prefs.people]);
+  }, [data, ings, amounts, prefs.stores, prefs.people]);
 
   // What you have, by aisle.
   const groups = useMemo(() => {
@@ -102,6 +104,15 @@ export function HomeView({ data, prefs, pantry, onChange, onOpen }) {
       <p className="muted small home-intro">
         Skriv, hvad du har i køleskab og skab. Retterne bruger det først, og det trækkes fra prisen.
       </p>
+      {carried?.items?.length > 0 && (
+        <div className="home-carried" role="status">
+          <p>
+            Lagt i Hjemme fra sidste uge: {andList(carried.items.map((c) => `${formatAmount(c.amount, c.unit)} ${ings[c.id]?.name ?? c.id}`))}.
+            {' '}Ret det, hvis noget ikke passer.
+          </p>
+          <button type="button" className="secondary home-carried-ok" onClick={onDismissCarried}>OK</button>
+        </div>
+      )}
 
       <section className="add-item" aria-label="Tilføj til Hjemme">
         <input
