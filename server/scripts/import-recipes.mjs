@@ -10,8 +10,13 @@
 //   node scripts/import-recipes.mjs [perSite=150] > data/recipes-raw.json
 
 import sharp from 'sharp';
+import { readFileSync } from 'node:fs';
+import { splitLine } from '../src/parse-ingredient.js';
 
 const PER_SITE = Number(process.argv[2] ?? 150);
+// --urls <file>: re-read exactly these recipes ([{ site, url }]) instead of sampling sitemaps.
+const urlsArg = process.argv.indexOf('--urls');
+const ONLY = urlsArg > 0 ? JSON.parse(readFileSync(process.argv[urlsArg + 1], 'utf8')) : null;
 const UA = 'Maet/0.1 (+https://github.com/Aske0772/maet-personal; opskriftsimport, personlig brug)';
 const GAP_MS = 1000;
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
@@ -64,17 +69,22 @@ function jsonLdRecipe(html) {
   return null;
 }
 
+// Steps as { text, section }: the section's own label ("Tilbehør til suppen") is kept,
+// but generic placeholders ("First instruction") are not.
 function instructionsOf(r) {
   const out = [];
-  const walk = (x) => {
+  const walk = (x, section) => {
     if (!x) return;
-    if (typeof x === 'string') return out.push(text(x));
-    if (Array.isArray(x)) return x.forEach(walk);
-    if (x.itemListElement) return walk(x.itemListElement);
-    if (x.text) return out.push(text(x.text));
+    if (typeof x === 'string') return out.push({ text: text(x), section });
+    if (Array.isArray(x)) return x.forEach((y) => walk(y, section));
+    if (x.itemListElement) {
+      const name = x.name && !/instruction|^step/i.test(x.name) ? text(x.name) : section;
+      return walk(x.itemListElement, name);
+    }
+    if (x.text) return out.push({ text: text(x.text), section });
   };
-  walk(r.recipeInstructions);
-  return out.filter(Boolean);
+  walk(r.recipeInstructions, null);
+  return out.filter((x) => x.text);
 }
 
 // Valdemarsro: microdata (itemprop="recipeIngredient" etc.).
@@ -88,7 +98,7 @@ function microdataRecipe(html) {
     totalTime: prop('totalTime'),
     recipeYield: prop('recipeYield'),
     recipeIngredient: ing,
-    steps: [...instr.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map((m) => text(m[1])).filter(Boolean)
+    steps: [...instr.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map((m) => ({ text: text(m[1]), section: null })).filter((x) => x.text)
   };
 }
 
@@ -101,17 +111,60 @@ const servingsOf = (y) => {
   return m ? Number(m[0]) : null;
 };
 
-// The facts that decide the result, per step: what is done (from a fixed list of
-// kitchen verbs), oven temperature and minutes. Never the source's sentences.
-const VERBS = ['steg', 'brun', 'svits', 'kog', 'simr', 'bag', 'grill', 'damp', 'blancher', 'hak', 'skær', 'riv',
-  'pres', 'bland', 'rør', 'vend', 'pisk', 'marinér', 'mariner', 'smag', 'server', 'drys', 'fordel', 'læg', 'hæld',
-  'mos', 'blend', 'purér', 'rist', 'lun', 'varm', 'afkøl', 'hvil', 'fyld', 'rul', 'form', 'pensl', 'kom'];
-function stepFacts(steps) {
-  return steps.map((s) => ({
-    verbs: VERBS.filter((v) => new RegExp(`(?<![a-zæøå])${v}`, 'i').test(s)),
-    temp: [...s.matchAll(/(\d{3})\s*(?:°|grader|gr\.)/gi)].map((m) => Number(m[1])),
-    minutes: [...s.matchAll(/(\d+(?:[-–]\d+)?)\s*(?:min|minutter)/gi)].map((m) => m[1]),
-    hours: [...s.matchAll(/(\d+(?:[,.]\d+)?)\s*(?:time|timer)\b/gi)].map((m) => m[1])
+// The facts that decide the result, per step – never the source's sentences. Each
+// field is picked from a fixed vocabulary or is a number: what is done (verbs),
+// which of the recipe's ingredients go in (by index), how long, how hot, on what
+// heat, lid on or off, in what (pan, pot, oven), how you know it is done, and how
+// it is portioned ("halvdelen", "lidt ad gangen").
+const VERBS = ['bring i kog', 'kog op', 'steg', 'brun', 'svits', 'kog', 'simr', 'bag', 'grill', 'damp', 'blancher',
+  'hak', 'skær', 'riv', 'pres', 'bland', 'rør', 'vend', 'pisk', 'marinér', 'mariner', 'smag', 'server', 'drys',
+  'fordel', 'læg', 'hæld', 'mos', 'blend', 'purér', 'rist', 'lun', 'varm', 'afkøl', 'hvil', 'fyld', 'rul', 'form',
+  'pensl', 'kom', 'tilsæt', 'jævn', 'skum', 'si ', 'dryp', 'gratiner', 'karamellisér', 'glasér', 'trække', 'sæt over',
+  'tag op', 'tag af', 'skyl', 'dræn', 'afdryp', 'halver', 'udblød', 'ælt', 'hæv', 'smør', 'krydr', 'pynt'];
+const HEAT = ['svag varme', 'lav varme', 'middel varme', 'jævn varme', 'god varme', 'høj varme', 'kraftig varme',
+  'meget varm', 'svagt', 'kraftigt', 'blidt', 'kog op', 'koge op', 'i kog', 'simre', 'småkoge', 'trække'];
+const LID = ['under låg', 'uden låg', 'låg på', 'tag låget af', 'læg låg', 'med låg', 'alufolie', 'folie'];
+const VESSEL = ['gryde', 'pande', 'wok', 'fad', 'bradepande', 'ovn', 'blender', 'stavblender', 'foodprocessor', 'skål',
+  'bageplade', 'grill', 'airfryer', 'dampovn', 'tærteform', 'springform', 'si', 'mortér'];
+const DONE = ['møre', 'mør', 'gyldne', 'gylden', 'sprøde', 'sprød', 'gennemstegt', 'gennemkogt', 'bløde', 'blød',
+  'blanke', 'tyk', 'tykke', 'cremet', 'glat', 'falder sammen', 'karamelliseret', 'kogt ind', 'koger ind', 'hvid',
+  'lysebrun', 'brun', 'rosa', 'smeltet', 'stivnet', 'bobler', 'jævnet', 'al dente', 'kerne', 'gennemvarm'];
+const SPLIT = ['halvdelen', 'resten', 'lidt ad gangen', 'i portioner', 'i et lag', 'hver for sig', 'til sidst',
+  'først', 'imens', 'samtidig', 'efter', 'inden servering', 'lige før servering', 'et ad gangen'];
+const OVEN = ['varmluft', 'alm. ovn', 'almindelig ovn', 'over-/undervarme', 'grillfunktion', 'midt i ovnen', 'nederst', 'øverst'];
+const NUM = '(?:\\d+(?:[,.]\\d+)?\\s*[½¼¾]?|[½¼¾])';
+const esc = (w) => w.replace(/[.*+?^${}()|[\]\\/]/g, '\\$&');
+// Verbs match as a word start ("steg" in "stegt"); the other lists as whole words.
+const found = (list, s, whole = true) => list.filter((w) => new RegExp(`(?<![a-zæøå])${esc(w)}${whole ? '(?![a-zæøå])' : ''}`, 'i').test(s));
+
+// Which of the recipe's own ingredient lines a step mentions: a word in the step
+// (without its ending: "bouillonen" → "bouillon") found inside an ingredient name
+// ("grøntsagsbouillon").
+const STOP = /^(til|med|og|eller|evt|ca|kom|lad|det|den|der|som|skal|ved|fra|over|under|alle?|godt|lidt|mere|hver|når|så|har|kan|ikke|imens|gryde|pande|fad|ovn|skål|varme|minutter|grader|stykker|tern|skiver|både|halve|grove|grofthakket|finthakket|frisk|friske)$/;
+const stem = (w) => w.replace(/(erne|ene|en|et|er|ne|e|s)$/, '');
+function ingredientNames(lines) {
+  return lines.map((l) => splitLine(l).name.toLowerCase());
+}
+function mentions(step, names) {
+  const words = step.toLowerCase().split(/[^a-zæøåé]+/).filter((w) => w.length >= 3 && !STOP.test(w)).map(stem).filter((w) => w.length >= 3);
+  return names.map((n, i) => (words.some((w) => n.includes(w)) ? i : -1)).filter((i) => i >= 0);
+}
+
+function stepFacts(steps, lines) {
+  const names = ingredientNames(lines);
+  return steps.map(({ text: s, section }) => ({
+    section: section ?? null,
+    verbs: found(VERBS, s, false).map((v) => v.trim()),
+    ings: mentions(s, names),
+    time: [...s.matchAll(new RegExp(`(?:ca\\.\\s*)?(${NUM}(?:\\s*(?:-|–|til)\\s*${NUM})?)\\s*(min\\.?|minutter|time|timer|sek\\.?|sekunder|døgn)(?![a-zæøå])`, 'gi'))]
+      .map((m) => `${m[1].replace(/\s+/g, '')} ${m[2].replace('.', '')}`),
+    temp: [...s.matchAll(/(\d{2,3})\s*(?:°|grader|gr\.)/gi)].map((m) => Number(m[1])),
+    heat: found(HEAT, s),
+    lid: found(LID, s),
+    in: found(VESSEL, s),
+    done: found(DONE, s),
+    order: found(SPLIT, s),
+    oven: found(OVEN, s)
   }));
 }
 
@@ -164,14 +217,26 @@ async function readRecipe(site, url) {
     serves: servingsOf(r.recipeYield),
     ingredients: r.recipeIngredient.map((s) => text(String(s))),
     stepCount: steps.length,
-    stepFacts: stepFacts(steps),
+    stepFacts: stepFacts(steps, r.recipeIngredient.map((x) => text(String(x)))),
     image: image?.url ?? null,
     color: image ? await colorOf(image.thumb) : null
   };
 }
 
 const out = [];
-for (const site of SITES) {
+if (ONLY) {
+  for (const { site, url } of ONLY) {
+    try {
+      const r = await readRecipe(SITES.find((x) => x.id === site), url);
+      if (r) out.push(r);
+      else console.error(`  ingen opskrift: ${url}`);
+    } catch (e) {
+      console.error(`  ${e.message}`);
+    }
+  }
+  console.error(`${out.length} af ${ONLY.length} genlæst`);
+}
+for (const site of ONLY ? [] : SITES) {
   const urls = [];
   for (const sm of site.sitemaps) {
     try {

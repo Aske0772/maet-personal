@@ -8,6 +8,9 @@ on:
       per_site:
         description: Opskrifter pr. side
         default: '150'
+      reread:
+        description: Genlæs kun retterne i data/recipe-urls.json (ja/nej)
+        default: 'nej'
 permissions:
   contents: write
 jobs:
@@ -22,7 +25,12 @@ jobs:
       - run: npm ci --prefix server && npm i --no-save --prefix server sharp
       - name: Import
         working-directory: server
-        run: node scripts/import-recipes.mjs ${{ inputs.per_site }} > data/recipes-raw.json
+        run: |
+          if [ "${{ inputs.reread }}" = "ja" ]; then
+            node scripts/import-recipes.mjs 0 --urls data/recipe-urls.json > data/recipes-raw.json
+          else
+            node scripts/import-recipes.mjs ${{ inputs.per_site }} > data/recipes-raw.json
+          fi
       - name: Commit
         run: |
           git config user.name "github-actions"
