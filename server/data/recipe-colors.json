@@ -1,266 +1,266 @@
 {
  "arla-orzo-gryde-med-svampe": {
   "status": 200,
-  "color": "#8e9677",
-  "kb": 125,
+  "color": "#8f9677",
+  "kb": 61,
   "type": "image/webp"
  },
  "arla-torsk-i-ovn": {
   "status": 200,
   "color": "#a49051",
-  "kb": 1135,
+  "kb": 798,
   "type": "image/webp"
  },
  "arla-burger-med-kartoffelfrikadeller": {
   "status": 200,
-  "color": "#b6a28c",
-  "kb": 841,
+  "color": "#b6a38c",
+  "kb": 584,
   "type": "image/webp"
  },
  "arla-krydret-svinekam-med-glaserede-log": {
   "status": 200,
-  "color": "#664a34",
-  "kb": 195,
+  "color": "#664b34",
+  "kb": 86,
   "type": "image/webp"
  },
  "arla-kartoffelmad-med-bacon": {
   "status": 200,
   "color": "#6d6143",
-  "kb": 221,
+  "kb": 104,
   "type": "image/webp"
  },
  "arla-linsesalat-med-salatost-og-hvidlogsbrod": {
   "status": 200,
   "color": "#7e7653",
-  "kb": 139,
+  "kb": 68,
   "type": "image/webp"
  },
  "arla-chilikrydrede-kodboller-i-graskarsuppe": {
   "status": 200,
   "color": "#735536",
-  "kb": 167,
+  "kb": 72,
   "type": "image/webp"
  },
  "arla-mexi-burger-med-salsa": {
   "status": 200,
   "color": "#9a8367",
-  "kb": 145,
+  "kb": 64,
   "type": "image/webp"
  },
  "arla-rodbedesuppe": {
   "status": 200,
-  "color": "#67302f",
-  "kb": 168,
+  "color": "#673030",
+  "kb": 79,
   "type": "image/webp"
  },
  "arla-grillede-koteletter-og-blomkal": {
   "status": 200,
-  "color": "#ad9474",
-  "kb": 194,
+  "color": "#ad9473",
+  "kb": 94,
   "type": "image/webp"
  },
  "arla-karrysuppe": {
   "status": 200,
   "color": "#937629",
-  "kb": 146,
+  "kb": 63,
   "type": "image/webp"
  },
  "arla-pasta-med-stegt-laks-og-lime": {
   "status": 200,
   "color": "#7a6d4d",
-  "kb": 224,
+  "kb": 105,
   "type": "image/webp"
  },
  "arla-fiskesuppe-med-torsk-laks-og-rejer": {
   "status": 200,
   "color": "#aaaa79",
-  "kb": 74,
+  "kb": 36,
   "type": "image/webp"
  },
  "arla-grask-pastasalat": {
   "status": 200,
-  "color": "#878254",
-  "kb": 245,
+  "color": "#878253",
+  "kb": 124,
   "type": "image/webp"
  },
  "arla-gulerodssuppe": {
   "status": 200,
   "color": "#dabb41",
-  "kb": 206,
+  "kb": 94,
   "type": "image/webp"
  },
  "arla-svinemorbrad-i-ovn": {
   "status": 200,
   "color": "#917e6a",
-  "kb": 138,
+  "kb": 70,
   "type": "image/webp"
  },
  "arla-peberfrugter-i-chilisauce": {
   "status": 200,
-  "color": "#976855",
-  "kb": 27,
+  "color": "#976854",
+  "kb": 18,
   "type": "image/webp"
  },
  "arla-curry-med-sorte-bonner": {
   "status": 200,
-  "color": "#9a6f32",
-  "kb": 220,
+  "color": "#996f32",
+  "kb": 107,
   "type": "image/webp"
  },
  "arla-pasta-med-laks": {
   "status": 200,
-  "color": "#a5866a",
-  "kb": 167,
+  "color": "#a5876a",
+  "kb": 80,
   "type": "image/webp"
  },
  "arla-laksetarte": {
   "status": 200,
   "color": "#b08d41",
-  "kb": 253,
+  "kb": 120,
   "type": "image/webp"
  },
  "arla-spaghetti-squash": {
   "status": 200,
-  "color": "#9e8679",
-  "kb": 159,
+  "color": "#9d8679",
+  "kb": 74,
   "type": "image/webp"
  },
  "arla-paprikagryde": {
   "status": 200,
-  "color": "#a45e44",
-  "kb": 183,
+  "color": "#a55e44",
+  "kb": 89,
   "type": "image/webp"
  },
  "arla-mild-karrysuppe-med-linser": {
   "status": 200,
   "color": "#888350",
-  "kb": 147,
+  "kb": 66,
   "type": "image/webp"
  },
  "arla-citron-pasta-m-bonner": {
   "status": 200,
   "color": "#98a07f",
-  "kb": 161,
+  "kb": 71,
   "type": "image/webp"
  },
  "arla-gulerodssuppe-med-sprode-kikarter": {
   "status": 200,
   "color": "#b8903e",
-  "kb": 177,
+  "kb": 78,
   "type": "image/webp"
  },
  "arla-oksekodssuppe": {
   "status": 200,
-  "color": "#96442f",
-  "kb": 1013,
+  "color": "#97442f",
+  "kb": 715,
   "type": "image/webp"
  },
  "arla-kartoffelsuppe-med-spinat-perlespelt-og-chorizo": {
   "status": 200,
   "color": "#8d7a5a",
-  "kb": 109,
+  "kb": 57,
   "type": "image/webp"
  },
  "arla-risotto": {
   "status": 200,
-  "color": "#8e835e",
-  "kb": 160,
+  "color": "#8e835d",
+  "kb": 71,
   "type": "image/webp"
  },
  "arla-oksekod-i-fad": {
   "status": 200,
   "color": "#bc9d5e",
-  "kb": 104,
+  "kb": 49,
   "type": "image/webp"
  },
  "arla-stegt-laks-med-speltotto": {
   "status": 200,
   "color": "#727a4f",
-  "kb": 123,
+  "kb": 59,
   "type": "image/webp"
  },
  "arla-tarte-med-tun": {
   "status": 200,
   "color": "#b19059",
-  "kb": 203,
+  "kb": 103,
   "type": "image/webp"
  },
  "arla-kyllingelar-i-ovn-med-cremede-gronkalskartofler": {
   "status": 200,
   "color": "#938a59",
-  "kb": 1173,
+  "kb": 827,
   "type": "image/webp"
  },
  "arla-pasta-med-flodeost-a-la-carbonara": {
   "status": 200,
   "color": "#d2b88e",
-  "kb": 800,
+  "kb": 565,
   "type": "image/webp"
  },
  "arla-wok-med-stegte-nudler-og-torsk": {
   "status": 200,
   "color": "#6d6849",
-  "kb": 175,
+  "kb": 92,
   "type": "image/webp"
  },
  "arla-nem-kyllingepande": {
   "status": 200,
-  "color": "#a78441",
-  "kb": 187,
+  "color": "#a68441",
+  "kb": 83,
   "type": "image/webp"
  },
  "arla-spaghetti-bolognese": {
   "status": 200,
-  "color": "#8b572d",
-  "kb": 275,
+  "color": "#8b582d",
+  "kb": 135,
   "type": "image/webp"
  },
  "arla-bonnedeller-i-pitabrod": {
   "status": 200,
   "color": "#857458",
-  "kb": 147,
+  "kb": 68,
   "type": "image/webp"
  },
  "arla-thaisuppe-med-nudler": {
   "status": 200,
-  "color": "#927c47",
-  "kb": 114,
+  "color": "#937c47",
+  "kb": 51,
   "type": "image/webp"
  },
  "arla-sandwich-med-stegt-andebryst": {
   "status": 200,
   "color": "#8b8370",
-  "kb": 148,
+  "kb": 71,
   "type": "image/webp"
  },
  "arla-thai-curry-a-la-cheasy": {
   "status": 200,
   "color": "#8b8b68",
-  "kb": 190,
+  "kb": 87,
   "type": "image/webp"
  },
  "arla-one-pot-med-laks-og-spinat": {
   "status": 200,
   "color": "#7f6c40",
-  "kb": 141,
+  "kb": 65,
   "type": "image/webp"
  },
  "arla-laks-i-airfryer": {
   "status": 200,
   "color": "#968f76",
-  "kb": 218,
+  "kb": 107,
   "type": "image/webp"
  },
  "arla-gronsagsgryde-med-citrongras": {
   "status": 200,
   "color": "#ad9863",
-  "kb": 970,
+  "kb": 675,
   "type": "image/webp"
  },
  "arla-pulled-laks": {
   "status": 200,
   "color": "#7b543e",
-  "kb": 181,
+  "kb": 81,
   "type": "image/webp"
  },
  "valdemarsro-omelet-med-gedefeta-tomat-og-sprod-salat": {
