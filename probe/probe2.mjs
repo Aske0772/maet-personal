@@ -21,14 +21,24 @@ function findLists(node, path = '$', out = []) {
   }
   return out;
 }
-for (const url of ['https://www.nemlig.com/kategori/frugt-og-groent/toerret-frugt-og-noedder', 'https://www.nemlig.com/kategori/mejeri-og-koel']) {
-  const r = await get(url);
-  const s = state(r.text);
-  const lists = s ? findLists(s) : [];
-  console.log(`\n### ${url} → ${r.status}; lists with price: ${lists.length}`);
-  for (const l of lists.slice(0, 6)) console.log('  ', l.path.slice(0, 160), 'n=', l.n, '\n     sample:', JSON.stringify(l.sample).slice(0, 900));
-  const totals = JSON.stringify(s ?? {}).match(/"(totalCount|total|count|pageSize|take|skip|NumFound|totalHits)":\d+/g) ?? [];
-  console.log('   totals:', [...new Set(totals)].slice(0, 12).join(' '));
+function findKey(node, key, path = '$', out = []) {
+  if (node && typeof node === 'object') {
+    for (const [k, v] of Object.entries(node)) {
+      if (k === key && v > 0) out.push({ path: `${path}.${k}`, parent: node });
+      findKey(v, key, `${path}.${k}`, out);
+    }
+  }
+  return out;
+}
+const r = await get('https://www.nemlig.com/kategori/frugt-og-groent/toerret-frugt-og-noedder');
+const s = state(r.text);
+for (const hit of findKey(s, 'totalCount')) {
+  console.log('\n### totalCount at', hit.path);
+  const parent = hit.parent;
+  console.log('   keys:', Object.keys(parent).join(', '));
+  for (const [k, v] of Object.entries(parent)) {
+    if (Array.isArray(v)) console.log(`   ${k}: array(${v.length}) first:`, JSON.stringify(v[0]).slice(0, 1500));
+  }
 }
 const d = JSON.parse((await get('https://api.digital.rema1000.dk/api/v3/departments', 'application/json')).text);
 console.log('\nREMA departments:', d.data.map((x) => `${x.id} ${x.name}`).join(' | '));
