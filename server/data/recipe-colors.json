@@ -1,0 +1,1652 @@
+{
+ "arla-orzo-gryde-med-svampe": {
+  "status": 200,
+  "color": "#8e9677",
+  "kb": 125,
+  "type": "image/webp"
+ },
+ "arla-torsk-i-ovn": {
+  "status": 200,
+  "color": "#a49051",
+  "kb": 1135,
+  "type": "image/webp"
+ },
+ "arla-burger-med-kartoffelfrikadeller": {
+  "status": 200,
+  "color": "#b6a28c",
+  "kb": 841,
+  "type": "image/webp"
+ },
+ "arla-krydret-svinekam-med-glaserede-log": {
+  "status": 200,
+  "color": "#664a34",
+  "kb": 195,
+  "type": "image/webp"
+ },
+ "arla-kartoffelmad-med-bacon": {
+  "status": 200,
+  "color": "#6d6143",
+  "kb": 221,
+  "type": "image/webp"
+ },
+ "arla-linsesalat-med-salatost-og-hvidlogsbrod": {
+  "status": 200,
+  "color": "#7e7653",
+  "kb": 139,
+  "type": "image/webp"
+ },
+ "arla-chilikrydrede-kodboller-i-graskarsuppe": {
+  "status": 200,
+  "color": "#735536",
+  "kb": 167,
+  "type": "image/webp"
+ },
+ "arla-mexi-burger-med-salsa": {
+  "status": 200,
+  "color": "#9a8367",
+  "kb": 145,
+  "type": "image/webp"
+ },
+ "arla-rodbedesuppe": {
+  "status": 200,
+  "color": "#67302f",
+  "kb": 168,
+  "type": "image/webp"
+ },
+ "arla-grillede-koteletter-og-blomkal": {
+  "status": 200,
+  "color": "#ad9474",
+  "kb": 194,
+  "type": "image/webp"
+ },
+ "arla-karrysuppe": {
+  "status": 200,
+  "color": "#937629",
+  "kb": 146,
+  "type": "image/webp"
+ },
+ "arla-pasta-med-stegt-laks-og-lime": {
+  "status": 200,
+  "color": "#7a6d4d",
+  "kb": 224,
+  "type": "image/webp"
+ },
+ "arla-fiskesuppe-med-torsk-laks-og-rejer": {
+  "status": 200,
+  "color": "#aaaa79",
+  "kb": 74,
+  "type": "image/webp"
+ },
+ "arla-grask-pastasalat": {
+  "status": 200,
+  "color": "#878254",
+  "kb": 245,
+  "type": "image/webp"
+ },
+ "arla-gulerodssuppe": {
+  "status": 200,
+  "color": "#dabb41",
+  "kb": 206,
+  "type": "image/webp"
+ },
+ "arla-svinemorbrad-i-ovn": {
+  "status": 200,
+  "color": "#917e6a",
+  "kb": 138,
+  "type": "image/webp"
+ },
+ "arla-peberfrugter-i-chilisauce": {
+  "status": 200,
+  "color": "#976855",
+  "kb": 27,
+  "type": "image/webp"
+ },
+ "arla-curry-med-sorte-bonner": {
+  "status": 200,
+  "color": "#9a6f32",
+  "kb": 220,
+  "type": "image/webp"
+ },
+ "arla-pasta-med-laks": {
+  "status": 200,
+  "color": "#a5866a",
+  "kb": 167,
+  "type": "image/webp"
+ },
+ "arla-laksetarte": {
+  "status": 200,
+  "color": "#b08d41",
+  "kb": 253,
+  "type": "image/webp"
+ },
+ "arla-spaghetti-squash": {
+  "status": 200,
+  "color": "#9e8679",
+  "kb": 159,
+  "type": "image/webp"
+ },
+ "arla-paprikagryde": {
+  "status": 200,
+  "color": "#a45e44",
+  "kb": 183,
+  "type": "image/webp"
+ },
+ "arla-mild-karrysuppe-med-linser": {
+  "status": 200,
+  "color": "#888350",
+  "kb": 147,
+  "type": "image/webp"
+ },
+ "arla-citron-pasta-m-bonner": {
+  "status": 200,
+  "color": "#98a07f",
+  "kb": 161,
+  "type": "image/webp"
+ },
+ "arla-gulerodssuppe-med-sprode-kikarter": {
+  "status": 200,
+  "color": "#b8903e",
+  "kb": 177,
+  "type": "image/webp"
+ },
+ "arla-oksekodssuppe": {
+  "status": 200,
+  "color": "#96442f",
+  "kb": 1013,
+  "type": "image/webp"
+ },
+ "arla-kartoffelsuppe-med-spinat-perlespelt-og-chorizo": {
+  "status": 200,
+  "color": "#8d7a5a",
+  "kb": 109,
+  "type": "image/webp"
+ },
+ "arla-risotto": {
+  "status": 200,
+  "color": "#8e835e",
+  "kb": 160,
+  "type": "image/webp"
+ },
+ "arla-oksekod-i-fad": {
+  "status": 200,
+  "color": "#bc9d5e",
+  "kb": 104,
+  "type": "image/webp"
+ },
+ "arla-stegt-laks-med-speltotto": {
+  "status": 200,
+  "color": "#727a4f",
+  "kb": 123,
+  "type": "image/webp"
+ },
+ "arla-tarte-med-tun": {
+  "status": 200,
+  "color": "#b19059",
+  "kb": 203,
+  "type": "image/webp"
+ },
+ "arla-kyllingelar-i-ovn-med-cremede-gronkalskartofler": {
+  "status": 200,
+  "color": "#938a59",
+  "kb": 1173,
+  "type": "image/webp"
+ },
+ "arla-pasta-med-flodeost-a-la-carbonara": {
+  "status": 200,
+  "color": "#d2b88e",
+  "kb": 800,
+  "type": "image/webp"
+ },
+ "arla-wok-med-stegte-nudler-og-torsk": {
+  "status": 200,
+  "color": "#6d6849",
+  "kb": 175,
+  "type": "image/webp"
+ },
+ "arla-nem-kyllingepande": {
+  "status": 200,
+  "color": "#a78441",
+  "kb": 187,
+  "type": "image/webp"
+ },
+ "arla-spaghetti-bolognese": {
+  "status": 200,
+  "color": "#8b572d",
+  "kb": 275,
+  "type": "image/webp"
+ },
+ "arla-bonnedeller-i-pitabrod": {
+  "status": 200,
+  "color": "#857458",
+  "kb": 147,
+  "type": "image/webp"
+ },
+ "arla-thaisuppe-med-nudler": {
+  "status": 200,
+  "color": "#927c47",
+  "kb": 114,
+  "type": "image/webp"
+ },
+ "arla-sandwich-med-stegt-andebryst": {
+  "status": 200,
+  "color": "#8b8370",
+  "kb": 148,
+  "type": "image/webp"
+ },
+ "arla-thai-curry-a-la-cheasy": {
+  "status": 200,
+  "color": "#8b8b68",
+  "kb": 190,
+  "type": "image/webp"
+ },
+ "arla-one-pot-med-laks-og-spinat": {
+  "status": 200,
+  "color": "#7f6c40",
+  "kb": 141,
+  "type": "image/webp"
+ },
+ "arla-laks-i-airfryer": {
+  "status": 200,
+  "color": "#968f76",
+  "kb": 218,
+  "type": "image/webp"
+ },
+ "arla-gronsagsgryde-med-citrongras": {
+  "status": 200,
+  "color": "#ad9863",
+  "kb": 970,
+  "type": "image/webp"
+ },
+ "arla-pulled-laks": {
+  "status": 200,
+  "color": "#7b543e",
+  "kb": 181,
+  "type": "image/webp"
+ },
+ "valdemarsro-omelet-med-gedefeta-tomat-og-sprod-salat": {
+  "status": 200,
+  "color": "#c0b696",
+  "kb": 112,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-quiche-lorraine": {
+  "status": 200,
+  "color": "#6c8259",
+  "kb": 36,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-torskerogn": {
+  "status": 200,
+  "color": "#c6b798",
+  "kb": 110,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-pasta-med-laks": {
+  "status": 200,
+  "color": "#bdb396",
+  "kb": 126,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-pasta-med-mozzarella-og-tomater": {
+  "status": 200,
+  "color": "#8d6345",
+  "kb": 99,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-mexicansk-graeskarsuppe": {
+  "status": 200,
+  "color": "#d2bb70",
+  "kb": 104,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-kikaerteboeffer": {
+  "status": 200,
+  "color": "#877956",
+  "kb": 103,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-katsu-kylling": {
+  "status": 200,
+  "color": "#a6a381",
+  "kb": 211,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-aspargesrisotto": {
+  "status": 200,
+  "color": "#abaa98",
+  "kb": 200,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-ramsloegspasta": {
+  "status": 200,
+  "color": "#bebcab",
+  "kb": 183,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-asiatisk-kyllingesalat": {
+  "status": 200,
+  "color": "#98a070",
+  "kb": 150,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-vegetar-cowboytoast": {
+  "status": 200,
+  "color": "#8e6444",
+  "kb": 130,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-vegetarisk-sloppy-joes-burger": {
+  "status": 200,
+  "color": "#d1beaa",
+  "kb": 117,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-halloumiwrap-med-tzatziki": {
+  "status": 200,
+  "color": "#c7b195",
+  "kb": 202,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-svampelasagne": {
+  "status": 200,
+  "color": "#bdbaab",
+  "kb": 188,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-caesar-wrap-med-kylling": {
+  "status": 200,
+  "color": "#b4aa89",
+  "kb": 121,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-tacos-med-kylling": {
+  "status": 200,
+  "color": "#c0a363",
+  "kb": 206,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-burger-med-crispy-kylling": {
+  "status": 200,
+  "color": "#b3a36d",
+  "kb": 107,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-torsk-med-cremet-polenta-og-svampe": {
+  "status": 200,
+  "color": "#bcad93",
+  "kb": 122,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-blomkaal-og-halloumi-i-sursoed-sauce": {
+  "status": 200,
+  "color": "#bda185",
+  "kb": 216,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-kyllingelasagne-med-spinat": {
+  "status": 200,
+  "color": "#b78843",
+  "kb": 142,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-vegetar-korma": {
+  "status": 200,
+  "color": "#9a7c48",
+  "kb": 227,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-gumbo-med-kylling": {
+  "status": 200,
+  "color": "#c2ae8c",
+  "kb": 216,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-kylling-i-sursoed-sauce": {
+  "status": 200,
+  "color": "#b5a881",
+  "kb": 199,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-fiskefad-med-torsk-og-porrer": {
+  "status": 200,
+  "color": "#aa9f67",
+  "kb": 160,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-tortellini-i-fad": {
+  "status": 200,
+  "color": "#ad7e3a",
+  "kb": 182,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-vegetar-taco": {
+  "status": 200,
+  "color": "#ab8f52",
+  "kb": 163,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-taquitos-med-kylling": {
+  "status": 200,
+  "color": "#b79f6f",
+  "kb": 132,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-groentsagswok": {
+  "status": 200,
+  "color": "#a69d67",
+  "kb": 109,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-torsk-i-filodej": {
+  "status": 200,
+  "color": "#d3bda3",
+  "kb": 82,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-vegetar-lady-og-vagabonden": {
+  "status": 200,
+  "color": "#baa693",
+  "kb": 108,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-burritos-med-oksekoed": {
+  "status": 200,
+  "color": "#b79f6a",
+  "kb": 179,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-bagt-pasta-bolognese": {
+  "status": 200,
+  "color": "#ab653e",
+  "kb": 188,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-asiatisk-wok-med-hvidloegsrejer": {
+  "status": 200,
+  "color": "#b1a07a",
+  "kb": 175,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-asiatisk-kyllingebowl": {
+  "status": 200,
+  "color": "#bca072",
+  "kb": 131,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-gratin-med-kylling": {
+  "status": 200,
+  "color": "#ba8c57",
+  "kb": 355,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-pulled-chicken-burger": {
+  "status": 200,
+  "color": "#ccb69b",
+  "kb": 161,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-tomatrisotto": {
+  "status": 200,
+  "color": "#b29471",
+  "kb": 230,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-indisk-vegetar-bowl": {
+  "status": 200,
+  "color": "#a99563",
+  "kb": 139,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-bagte-soede-kartofler": {
+  "status": 200,
+  "color": "#a88c71",
+  "kb": 121,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-nudler-med-broccoli-og-sesam-chiliolie": {
+  "status": 200,
+  "color": "#b9bc90",
+  "kb": 172,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-mulligatawny-suppe": {
+  "status": 200,
+  "color": "#b9ab79",
+  "kb": 296,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-one-pot-pasta-med-spinat-og-aerter": {
+  "status": 200,
+  "color": "#a6ae89",
+  "kb": 111,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-nudelsuppe-med-kylling-og-groent": {
+  "status": 200,
+  "color": "#a17f62",
+  "kb": 263,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-hvid-pastasuppe": {
+  "status": 200,
+  "color": "#a29568",
+  "kb": 214,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-kyllingestykker-med-nachos": {
+  "status": 200,
+  "color": "#c39f73",
+  "kb": 129,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-pasta-med-hasselnoedder-salvie": {
+  "status": 200,
+  "color": "#baaf9a",
+  "kb": 135,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-nem-tortillas-med-krydret-oksekoed": {
+  "status": 200,
+  "color": "#b4a99c",
+  "kb": 129,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-flammkuchen": {
+  "status": 200,
+  "color": "#caa87d",
+  "kb": 159,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-blomkaalscurry": {
+  "status": 200,
+  "color": "#999382",
+  "kb": 96,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-mexicansk-lasagne": {
+  "status": 200,
+  "color": "#af893e",
+  "kb": 169,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-kylling-vindaloo": {
+  "status": 200,
+  "color": "#c0b29b",
+  "kb": 132,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-laks-sesam-citron": {
+  "status": 200,
+  "color": "#cdb07d",
+  "kb": 235,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-wraps-med-kikaerter-og-blomkaal": {
+  "status": 200,
+  "color": "#bcb09e",
+  "kb": 224,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-groenkaalssuppe": {
+  "status": 200,
+  "color": "#bcb59b",
+  "kb": 134,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-grontsagsfad": {
+  "status": 200,
+  "color": "#abac9b",
+  "kb": 106,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-aertesuppe": {
+  "status": 200,
+  "color": "#d0c992",
+  "kb": 100,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-tomatsuppe-opskrift": {
+  "status": 200,
+  "color": "#ddc1a4",
+  "kb": 181,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-souvlaki-graesk-kebab": {
+  "status": 200,
+  "color": "#afa691",
+  "kb": 135,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-vegetarburger": {
+  "status": 200,
+  "color": "#c1a888",
+  "kb": 132,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-helstegt-kylling": {
+  "status": 200,
+  "color": "#9e704f",
+  "kb": 113,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-boef-stroganoff": {
+  "status": 200,
+  "color": "#966c3f",
+  "kb": 133,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-lakselasagne": {
+  "status": 200,
+  "color": "#97855a",
+  "kb": 186,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-lasagne": {
+  "status": 200,
+  "color": "#c3bbb0",
+  "kb": 33,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-gulerodssuppe": {
+  "status": 200,
+  "color": "#cdb757",
+  "kb": 215,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-kyllingedeller-spidskaalswraps": {
+  "status": 200,
+  "color": "#9ea192",
+  "kb": 102,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-fiskeburger": {
+  "status": 200,
+  "color": "#b1ad93",
+  "kb": 167,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-svinemoerbrad-med-parmaskinke": {
+  "status": 200,
+  "color": "#9a7b6c",
+  "kb": 120,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-kyllingedeller": {
+  "status": 200,
+  "color": "#92856e",
+  "kb": 133,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-pasta-med-moerbrad-i-tomatfloedesauce": {
+  "status": 200,
+  "color": "#b39c85",
+  "kb": 178,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-laks-paa-grill-med-citron-og-krydderurter": {
+  "status": 200,
+  "color": "#837661",
+  "kb": 51,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-kartoffelsuppe": {
+  "status": 200,
+  "color": "#c6b79f",
+  "kb": 94,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-nem-pastaret-med-laks-og-basilikum": {
+  "status": 200,
+  "color": "#d3bea7",
+  "kb": 114,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-butternut-squash-suppe": {
+  "status": 200,
+  "color": "#d9bc6c",
+  "kb": 127,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-taerte-med-kylling": {
+  "status": 200,
+  "color": "#b1955d",
+  "kb": 280,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-kartoffel-og-bacon-taerte": {
+  "status": 200,
+  "color": "#cfa756",
+  "kb": 137,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-teriyaki-kylling": {
+  "status": 200,
+  "color": "#908d5f",
+  "kb": 142,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-vegetariske-boller-i-karry": {
+  "status": 200,
+  "color": "#bbae86",
+  "kb": 218,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-sellerisuppe": {
+  "status": 200,
+  "color": "#afa899",
+  "kb": 217,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-italiensk-pasta-carbonara": {
+  "status": 200,
+  "color": "#b9ac97",
+  "kb": 185,
+  "type": "image/jpeg"
+ },
+ "valdemarsro-kyllingespyd-med-teriyaki-glace": {
+  "status": 200,
+  "color": "#98826b",
+  "kb": 244,
+  "type": "image/jpeg"
+ },
+ "madensverden-hamburgerryg-kogetid": {
+  "status": 200,
+  "color": "#d1927c",
+  "kb": 50,
+  "type": "image/jpeg"
+ },
+ "madensverden-kylling-med-groent-og-kartofler-i-fad": {
+  "status": 200,
+  "color": "#a2856e",
+  "kb": 63,
+  "type": "image/jpeg"
+ },
+ "madensverden-pasta-med-svampe": {
+  "status": 200,
+  "color": "#c9996b",
+  "kb": 55,
+  "type": "image/jpeg"
+ },
+ "madensverden-grillede-koteletter-ben-floedestuvet-savoykaal": {
+  "status": 200,
+  "color": "#c0a56c",
+  "kb": 50,
+  "type": "image/jpeg"
+ },
+ "madensverden-spaghetti-med-poelser": {
+  "status": 200,
+  "color": "#ba9367",
+  "kb": 72,
+  "type": "image/jpeg"
+ },
+ "madensverden-risotto-med-broccoli-og-persille": {
+  "status": 200,
+  "color": "#9fbf3f",
+  "kb": 97,
+  "type": "image/jpeg"
+ },
+ "madensverden-spidskaalswraps-med-kylling": {
+  "status": 200,
+  "color": "#b19756",
+  "kb": 66,
+  "type": "image/jpeg"
+ },
+ "madensverden-avocadopasta": {
+  "status": 200,
+  "color": "#c6bc4b",
+  "kb": 131,
+  "type": "image/jpeg"
+ },
+ "madensverden-thai-fiskefrikadeller": {
+  "status": 200,
+  "color": "#a8874a",
+  "kb": 87,
+  "type": "image/jpeg"
+ },
+ "madensverden-sandwich-med-kylling-og-bacon": {
+  "status": 200,
+  "color": "#b38d5d",
+  "kb": 49,
+  "type": "image/jpeg"
+ },
+ "madensverden-vegetar-galette-med-spinat": {
+  "status": 200,
+  "color": "#998b6d",
+  "kb": 82,
+  "type": "image/jpeg"
+ },
+ "madensverden-groen-pasta-med-laks-og-aerter": {
+  "status": 200,
+  "color": "#a09a60",
+  "kb": 51,
+  "type": "image/jpeg"
+ },
+ "madensverden-kylling-med-baconsvoeb-og-champignon-sauce": {
+  "status": 200,
+  "color": "#b57e38",
+  "kb": 60,
+  "type": "image/jpeg"
+ },
+ "madensverden-pasta-med-floedeost-og-bagte-tomater": {
+  "status": 200,
+  "color": "#e6be90",
+  "kb": 65,
+  "type": "image/jpeg"
+ },
+ "madensverden-moerksej-ovn": {
+  "status": 200,
+  "color": "#c9b395",
+  "kb": 72,
+  "type": "image/jpeg"
+ },
+ "madensverden-kylling-med-feta": {
+  "status": 200,
+  "color": "#d6b384",
+  "kb": 55,
+  "type": "image/jpeg"
+ },
+ "madensverden-laksebowl": {
+  "status": 200,
+  "color": "#a1905c",
+  "kb": 65,
+  "type": "image/jpeg"
+ },
+ "madensverden-kylling-med-ris": {
+  "status": 200,
+  "color": "#af7b4c",
+  "kb": 79,
+  "type": "image/jpeg"
+ },
+ "madensverden-hvidkaalsgryde": {
+  "status": 200,
+  "color": "#806133",
+  "kb": 78,
+  "type": "image/jpeg"
+ },
+ "madensverden-lynstegt-oksekoed-med-groentsager": {
+  "status": 200,
+  "color": "#9c6f45",
+  "kb": 74,
+  "type": "image/jpeg"
+ },
+ "madensverden-stegt-torsk-med-spidskaal-og-kartofler": {
+  "status": 200,
+  "color": "#c99763",
+  "kb": 47,
+  "type": "image/jpeg"
+ },
+ "madensverden-spinatgryde-med-kylling": {
+  "status": 200,
+  "color": "#87853e",
+  "kb": 89,
+  "type": "image/jpeg"
+ },
+ "madensverden-dampet-hellefisk-i-ovn-med-bagte-groentsager": {
+  "status": 200,
+  "color": "#d0a285",
+  "kb": 36,
+  "type": "image/jpeg"
+ },
+ "madensverden-vegansk-pastaret": {
+  "status": 200,
+  "color": "#9c7d47",
+  "kb": 70,
+  "type": "image/jpeg"
+ },
+ "madensverden-gammeldags-oksesteg-stegeso": {
+  "status": 200,
+  "color": "#8a4d31",
+  "kb": 118,
+  "type": "image/jpeg"
+ },
+ "madensverden-fyldte-bagte-kartofler-med-bacon-og-spinat": {
+  "status": 200,
+  "color": "#af7d52",
+  "kb": 74,
+  "type": "image/jpeg"
+ },
+ "madensverden-dampet-laks-i-dampovn": {
+  "status": 200,
+  "color": "#cc9f7c",
+  "kb": 48,
+  "type": "image/jpeg"
+ },
+ "madensverden-sund-pastasalat-med-broccoli-aerter-og-persilleolie": {
+  "status": 200,
+  "color": "#8aa54f",
+  "kb": 58,
+  "type": "image/jpeg"
+ },
+ "madensverden-gammeldags-hvidkaalssuppe-med-koed-og-groentsager": {
+  "status": 200,
+  "color": "#b79053",
+  "kb": 80,
+  "type": "image/jpeg"
+ },
+ "madensverden-indianergryde": {
+  "status": 200,
+  "color": "#a56a35",
+  "kb": 98,
+  "type": "image/jpeg"
+ },
+ "madensverden-asiatisk-kalkunsteg": {
+  "status": 200,
+  "color": "#c39e61",
+  "kb": 50,
+  "type": "image/jpeg"
+ },
+ "madensverden-salsiccia-ragu-med-italiensk-poelse-pasta-og-aubergine": {
+  "status": 200,
+  "color": "#c78253",
+  "kb": 80,
+  "type": "image/jpeg"
+ },
+ "madensverden-spaghetti-med-guleroedder-nem-koedfri-pastaret": {
+  "status": 200,
+  "color": "#a88e61",
+  "kb": 69,
+  "type": "image/jpeg"
+ },
+ "madensverden-boeffer-med-sennep-og-djaevlesovs-opskrift-med-billeder": {
+  "status": 200,
+  "color": "#8d7351",
+  "kb": 103,
+  "type": "image/jpeg"
+ },
+ "madensverden-stuvet-spaghetti-med-kylling-og-bacon": {
+  "status": 200,
+  "color": "#b1a67b",
+  "kb": 48,
+  "type": "image/jpeg"
+ },
+ "madensverden-graesk-kylling-med-kartofler-tzatziki-og-salat": {
+  "status": 200,
+  "color": "#a76829",
+  "kb": 89,
+  "type": "image/jpeg"
+ },
+ "madensverden-nem-pastaret": {
+  "status": 200,
+  "color": "#b49f65",
+  "kb": 65,
+  "type": "image/jpeg"
+ },
+ "madensverden-baconruller-i-fad": {
+  "status": 200,
+  "color": "#d6a593",
+  "kb": 53,
+  "type": "image/jpeg"
+ },
+ "madensverden-spinatlasagne": {
+  "status": 200,
+  "color": "#a17340",
+  "kb": 64,
+  "type": "image/jpeg"
+ },
+ "madensverden-gryderet-med-nakkefilet-og-paprika": {
+  "status": 200,
+  "color": "#dea37d",
+  "kb": 65,
+  "type": "image/jpeg"
+ },
+ "madensverden-moerbrad-i-fad": {
+  "status": 200,
+  "color": "#bf8843",
+  "kb": 71,
+  "type": "image/jpeg"
+ },
+ "madensverden-vegetarisk-gryderet": {
+  "status": 200,
+  "color": "#88704a",
+  "kb": 80,
+  "type": "image/jpeg"
+ },
+ "madensverden-ovnbagt-kuller-fisk-ovn": {
+  "status": 200,
+  "color": "#d0b78a",
+  "kb": 85,
+  "type": "image/jpeg"
+ },
+ "madensverden-butterfly-laks": {
+  "status": 200,
+  "color": "#7e8836",
+  "kb": 55,
+  "type": "image/jpeg"
+ },
+ "madensverden-tabbouleh-med-ovnstegt-kylling": {
+  "status": 200,
+  "color": "#e4ce71",
+  "kb": 72,
+  "type": "image/jpeg"
+ },
+ "madensverden-axelborg-kylling": {
+  "status": 200,
+  "color": "#b48642",
+  "kb": 86,
+  "type": "image/jpeg"
+ },
+ "madensverden-gryderet-med-ribeye-og-pasta": {
+  "status": 200,
+  "color": "#9a703b",
+  "kb": 119,
+  "type": "image/jpeg"
+ },
+ "madensverden-burritos": {
+  "status": 200,
+  "color": "#c69e78",
+  "kb": 58,
+  "type": "image/jpeg"
+ },
+ "madensverden-skaftkoteletter-med-kartofler": {
+  "status": 200,
+  "color": "#b37953",
+  "kb": 91,
+  "type": "image/jpeg"
+ },
+ "madensverden-blomkaal-og-kyllingefilet": {
+  "status": 200,
+  "color": "#a68b52",
+  "kb": 90,
+  "type": "image/jpeg"
+ },
+ "madensverden-lasagnette": {
+  "status": 200,
+  "color": "#b48644",
+  "kb": 45,
+  "type": "image/jpeg"
+ },
+ "madensverden-citronpasta": {
+  "status": 200,
+  "color": "#d0b672",
+  "kb": 65,
+  "type": "image/jpeg"
+ },
+ "madensverden-kylling-med-kokosmaelk": {
+  "status": 200,
+  "color": "#c0a543",
+  "kb": 55,
+  "type": "image/jpeg"
+ },
+ "madensverden-bornholmergryde": {
+  "status": 200,
+  "color": "#b28d4a",
+  "kb": 47,
+  "type": "image/jpeg"
+ },
+ "madensverden-one-pot-pasta": {
+  "status": 200,
+  "color": "#d2924c",
+  "kb": 89,
+  "type": "image/jpeg"
+ },
+ "madensverden-pizza-margherita": {
+  "status": 200,
+  "color": "#bd9f76",
+  "kb": 57,
+  "type": "image/jpeg"
+ },
+ "madensverden-kogt-torskerogn-opskrift": {
+  "status": 200,
+  "color": "#88795e",
+  "kb": 55,
+  "type": "image/jpeg"
+ },
+ "madensverden-kaalpoelser-med-groenlangkaal": {
+  "status": 200,
+  "color": "#a77e3e",
+  "kb": 51,
+  "type": "image/jpeg"
+ },
+ "madensverden-spansk-kylling": {
+  "status": 200,
+  "color": "#af733f",
+  "kb": 80,
+  "type": "image/jpeg"
+ },
+ "madensverden-laks-med-ratatouille": {
+  "status": 200,
+  "color": "#c1895b",
+  "kb": 55,
+  "type": "image/jpeg"
+ },
+ "madensverden-middelhavsgryde": {
+  "status": 200,
+  "color": "#a37351",
+  "kb": 71,
+  "type": "image/jpeg"
+ },
+ "madensverden-pasta-med-kikaerter": {
+  "status": 200,
+  "color": "#c57b4b",
+  "kb": 60,
+  "type": "image/jpeg"
+ },
+ "madensverden-koteletter-med-rosenkaal": {
+  "status": 200,
+  "color": "#b98e62",
+  "kb": 67,
+  "type": "image/jpeg"
+ },
+ "madensverden-ungarsk-kylling-chicken-paprikash": {
+  "status": 200,
+  "color": "#96572c",
+  "kb": 90,
+  "type": "image/jpeg"
+ },
+ "madensverden-laksegryde": {
+  "status": 200,
+  "color": "#998246",
+  "kb": 89,
+  "type": "image/jpeg"
+ },
+ "madensverden-kylling-piccata": {
+  "status": 200,
+  "color": "#a29267",
+  "kb": 79,
+  "type": "image/jpeg"
+ },
+ "madensverden-cremet-blomkaalssuppe": {
+  "status": 200,
+  "color": "#aaaa9b",
+  "kb": 62,
+  "type": "image/jpeg"
+ },
+ "madensverden-tomatsuppe": {
+  "status": 200,
+  "color": "#a88049",
+  "kb": 55,
+  "type": "image/jpeg"
+ },
+ "madensverden-frikadeller-i-fad": {
+  "status": 200,
+  "color": "#b99558",
+  "kb": 51,
+  "type": "image/jpeg"
+ },
+ "mummum-couscoussalat-med-pesto": {
+  "status": 200,
+  "color": "#988e5b",
+  "kb": 99,
+  "type": "image/webp"
+ },
+ "mummum-hasselback-kylling-med-feta-og-spinat": {
+  "status": 200,
+  "color": "#a79c7a",
+  "kb": 55,
+  "type": "image/webp"
+ },
+ "mummum-bagte-kartoffelskiver-med-fetacreme": {
+  "status": 200,
+  "color": "#b7936a",
+  "kb": 97,
+  "type": "image/webp"
+ },
+ "mummum-pastasalat-med-groen-pesto-og-granataeble": {
+  "status": 200,
+  "color": "#8d8049",
+  "kb": 73,
+  "type": "image/webp"
+ },
+ "mummum-bagt-graeskar-med-bacon-og-fetaost": {
+  "status": 200,
+  "color": "#b68a63",
+  "kb": 81,
+  "type": "image/webp"
+ },
+ "mummum-wok-med-rejer": {
+  "status": 200,
+  "color": "#aa8f63",
+  "kb": 67,
+  "type": "image/webp"
+ },
+ "mummum-nachos-med-boennequeso": {
+  "status": 200,
+  "color": "#b79767",
+  "kb": 112,
+  "type": "image/webp"
+ },
+ "mummum-fyldt-svinemoerbrad-med-hvidloegsost-og-bacon": {
+  "status": 200,
+  "color": "#b8a395",
+  "kb": 44,
+  "type": "image/webp"
+ },
+ "mummum-hvidkaalssuppe": {
+  "status": 200,
+  "color": "#d8cab4",
+  "kb": 51,
+  "type": "image/webp"
+ },
+ "mummum-vegetarisk-taerte-med-kartofler-og-soltoerrede-tomater": {
+  "status": 200,
+  "color": "#c57d4d",
+  "kb": 88,
+  "type": "image/webp"
+ },
+ "mummum-laksetaerte-med-spinat": {
+  "status": 200,
+  "color": "#a28451",
+  "kb": 101,
+  "type": "image/webp"
+ },
+ "mummum-kyllingekebab": {
+  "status": 200,
+  "color": "#93643f",
+  "kb": 73,
+  "type": "image/webp"
+ },
+ "mummum-dahl-med-kylling": {
+  "status": 200,
+  "color": "#ceb383",
+  "kb": 55,
+  "type": "image/webp"
+ },
+ "mummum-perlespeltsalat-med-marinerede-kyllingespyd": {
+  "status": 200,
+  "color": "#a68557",
+  "kb": 62,
+  "type": "image/webp"
+ },
+ "mummum-sproed-nachosburger": {
+  "status": 200,
+  "color": "#857d60",
+  "kb": 48,
+  "type": "image/webp"
+ },
+ "mummum-oksemoerbradboeffer-paa-pande": {
+  "status": 200,
+  "color": "#816356",
+  "kb": 68,
+  "type": "image/webp"
+ },
+ "mummum-indbagte-hakkeboeffer": {
+  "status": 200,
+  "color": "#a88968",
+  "kb": 72,
+  "type": "image/webp"
+ },
+ "mummum-skinketaerte": {
+  "status": 200,
+  "color": "#bc9c74",
+  "kb": 110,
+  "type": "image/webp"
+ },
+ "mummum-torsk-i-fad-med-serranoskinke-og-groentsager": {
+  "status": 200,
+  "color": "#bd8a53",
+  "kb": 102,
+  "type": "image/webp"
+ },
+ "mummum-kyllingetaerte-med-butterdej": {
+  "status": 200,
+  "color": "#ba9e7a",
+  "kb": 56,
+  "type": "image/webp"
+ },
+ "mummum-honningmarineret-laks": {
+  "status": 200,
+  "color": "#cbaa78",
+  "kb": 74,
+  "type": "image/webp"
+ },
+ "mummum-hakkeboeffer-i-fad-i-paprikasauce": {
+  "status": 200,
+  "color": "#ac875d",
+  "kb": 54,
+  "type": "image/webp"
+ },
+ "mummum-peberfrugtsuppe": {
+  "status": 200,
+  "color": "#ce974d",
+  "kb": 42,
+  "type": "image/webp"
+ },
+ "mummum-frikadellefad": {
+  "status": 200,
+  "color": "#b07045",
+  "kb": 113,
+  "type": "image/webp"
+ },
+ "mummum-indbagt-kylling-i-butterdej-med-spinat": {
+  "status": 200,
+  "color": "#bcae93",
+  "kb": 40,
+  "type": "image/webp"
+ },
+ "mummum-bulgursalat-med-bagte-boenner": {
+  "status": 200,
+  "color": "#9e8a6d",
+  "kb": 71,
+  "type": "image/webp"
+ },
+ "mummum-boef-stroganoff-med-oksemoerbrad": {
+  "status": 200,
+  "color": "#9b7c58",
+  "kb": 92,
+  "type": "image/webp"
+ },
+ "mummum-fiskefingre": {
+  "status": 200,
+  "color": "#c49a67",
+  "kb": 60,
+  "type": "image/webp"
+ },
+ "mummum-finsk-laksesuppe-lohikeitto": {
+  "status": 200,
+  "color": "#787673",
+  "kb": 51,
+  "type": "image/webp"
+ },
+ "mummum-risotto-med-rejer": {
+  "status": 200,
+  "color": "#c19b76",
+  "kb": 74,
+  "type": "image/webp"
+ },
+ "mummum-aubergine-pizza": {
+  "status": 200,
+  "color": "#9c5f4b",
+  "kb": 105,
+  "type": "image/webp"
+ },
+ "mummum-pandestegt-laks": {
+  "status": 200,
+  "color": "#907154",
+  "kb": 68,
+  "type": "image/webp"
+ },
+ "mummum-risotto-med-aerter-og-serranoskinke": {
+  "status": 200,
+  "color": "#999a71",
+  "kb": 40,
+  "type": "image/webp"
+ },
+ "mummum-pasta-sugo": {
+  "status": 200,
+  "color": "#b6814e",
+  "kb": 77,
+  "type": "image/webp"
+ },
+ "mummum-pasta-med-salvie-og-kylling": {
+  "status": 200,
+  "color": "#a69e84",
+  "kb": 86,
+  "type": "image/webp"
+ },
+ "mummum-spaghetti-napoli": {
+  "status": 200,
+  "color": "#a27151",
+  "kb": 67,
+  "type": "image/webp"
+ },
+ "mummum-pasta-med-karamelliserede-loeg-og-mascarpone": {
+  "status": 200,
+  "color": "#9a9c76",
+  "kb": 73,
+  "type": "image/webp"
+ },
+ "mummum-aubergine-i-ovn-med-tomat-og-ost": {
+  "status": 200,
+  "color": "#b19977",
+  "kb": 85,
+  "type": "image/webp"
+ },
+ "mummum-varmroeget-laks-med-blomkaalspure-og-aeblesalat": {
+  "status": 200,
+  "color": "#c3b997",
+  "kb": 54,
+  "type": "image/webp"
+ },
+ "mummum-pastasalat-med-tun": {
+  "status": 200,
+  "color": "#ad9064",
+  "kb": 87,
+  "type": "image/webp"
+ },
+ "mummum-millionkarry-med-ris": {
+  "status": 200,
+  "color": "#919a45",
+  "kb": 76,
+  "type": "image/webp"
+ },
+ "mummum-tyrkisk-pasta": {
+  "status": 200,
+  "color": "#a58e73",
+  "kb": 248,
+  "type": "image/webp"
+ },
+ "mummum-hakket-oksekoed-i-fad-med-kartoffel-og-groentsager": {
+  "status": 200,
+  "color": "#bc793d",
+  "kb": 97,
+  "type": "image/webp"
+ },
+ "mummum-pasta-med-asparges-og-serranoskinke": {
+  "status": 200,
+  "color": "#b7a587",
+  "kb": 40,
+  "type": "image/webp"
+ },
+ "mummum-kaalfad-med-oksekoed-og-groentsager": {
+  "status": 200,
+  "color": "#b29667",
+  "kb": 92,
+  "type": "image/webp"
+ },
+ "mummum-kylling-i-pestofloedesauce": {
+  "status": 200,
+  "color": "#d5a556",
+  "kb": 55,
+  "type": "image/webp"
+ },
+ "mummum-pita-pizza-med-serrano-og-rucola": {
+  "status": 200,
+  "color": "#a8825e",
+  "kb": 83,
+  "type": "image/webp"
+ },
+ "mummum-raviolisalat-med-groen-pesto-og-fetaost": {
+  "status": 200,
+  "color": "#817c55",
+  "kb": 85,
+  "type": "image/webp"
+ },
+ "mummum-sandwich-med-hoensesalat": {
+  "status": 200,
+  "color": "#9b9488",
+  "kb": 38,
+  "type": "image/webp"
+ },
+ "mummum-pastaret-med-rucolapesto-og-laks": {
+  "status": 200,
+  "color": "#8b8840",
+  "kb": 119,
+  "type": "image/webp"
+ },
+ "mummum-yakitorikyllingespyd": {
+  "status": 200,
+  "color": "#b89977",
+  "kb": 50,
+  "type": "image/webp"
+ },
+ "mummum-caprese-pastasalat": {
+  "status": 200,
+  "color": "#9f7840",
+  "kb": 275,
+  "type": "image/webp"
+ },
+ "mummum-ovnbagt-laks-med-peberfrugtsauce-og-groentsager": {
+  "status": 200,
+  "color": "#da9c62",
+  "kb": 506,
+  "type": "image/webp"
+ },
+ "mummum-pastasalat-med-peberfrugtspesto-og-tomat": {
+  "status": 200,
+  "color": "#c36d43",
+  "kb": 281,
+  "type": "image/webp"
+ },
+ "mummum-risotto-med-graeskar-og-svampe": {
+  "status": 200,
+  "color": "#9e8449",
+  "kb": 97,
+  "type": "image/webp"
+ },
+ "mummum-taerte-med-chorizo-og-groentsager": {
+  "status": 200,
+  "color": "#b69568",
+  "kb": 124,
+  "type": "image/webp"
+ },
+ "mummum-foraarsruller-med-kylling": {
+  "status": 200,
+  "color": "#927e6a",
+  "kb": 243,
+  "type": "image/webp"
+ },
+ "mummum-kyllingekoedboller-i-karry-med-groentsager": {
+  "status": 200,
+  "color": "#ae9974",
+  "kb": 62,
+  "type": "image/webp"
+ },
+ "mummum-pasta-alla-zozzona": {
+  "status": 200,
+  "color": "#c68c5e",
+  "kb": 136,
+  "type": "image/webp"
+ },
+ "mummum-pastaret-med-tigerrejer-og-groentsager": {
+  "status": 200,
+  "color": "#b4a177",
+  "kb": 182,
+  "type": "image/webp"
+ },
+ "mummum-fyldt-kylling-med-pasta-i-tomatfloedesauce": {
+  "status": 200,
+  "color": "#ae8248",
+  "kb": 275,
+  "type": "image/webp"
+ },
+ "mummum-spaghetti-med-kylling-spinat-og-peberfrugt": {
+  "status": 200,
+  "color": "#9d8049",
+  "kb": 241,
+  "type": "image/webp"
+ },
+ "mummum-pasta-med-flanksteak-og-cherrytomater": {
+  "status": 200,
+  "color": "#b38758",
+  "kb": 57,
+  "type": "image/webp"
+ },
+ "mummum-penne-i-peberfrugtsauce-med-kylling": {
+  "status": 200,
+  "color": "#bf9457",
+  "kb": 203,
+  "type": "image/webp"
+ },
+ "mummum-pasta-med-bacon-svampe-og-parmesan": {
+  "status": 200,
+  "color": "#ac935b",
+  "kb": 192,
+  "type": "image/webp"
+ },
+ "mummum-pasta-alla-norcina": {
+  "status": 200,
+  "color": "#bda789",
+  "kb": 261,
+  "type": "image/webp"
+ },
+ "mummum-asiatisk-bowl-med-laks": {
+  "status": 200,
+  "color": "#9d8750",
+  "kb": 248,
+  "type": "image/webp"
+ },
+ "mummum-pastaret-med-bagt-graeskar-og-salvie": {
+  "status": 200,
+  "color": "#c2a770",
+  "kb": 46,
+  "type": "image/webp"
+ },
+ "mummum-nakkekoteletter-paa-grill": {
+  "status": 200,
+  "color": "#9e846b",
+  "kb": 114,
+  "type": "image/webp"
+ },
+ "mummum-oksefilet-paa-grill": {
+  "status": 200,
+  "color": "#a3746b",
+  "kb": 305,
+  "type": "image/webp"
+ },
+ "mummum-grillet-laks": {
+  "status": 200,
+  "color": "#c0a981",
+  "kb": 50,
+  "type": "image/webp"
+ },
+ "mummum-pasta-med-salsiccia-og-broccolini": {
+  "status": 200,
+  "color": "#a48951",
+  "kb": 120,
+  "type": "image/webp"
+ },
+ "mummum-taerte-med-skinke-og-broccoli": {
+  "status": 200,
+  "color": "#c2ad7c",
+  "kb": 214,
+  "type": "image/webp"
+ },
+ "mummum-aeggewrap-med-kylling-og-pesto": {
+  "status": 200,
+  "color": "#9f885a",
+  "kb": 388,
+  "type": "image/webp"
+ },
+ "mummum-spinatpasta-med-bacon-i-floedesauce": {
+  "status": 200,
+  "color": "#a4a26a",
+  "kb": 263,
+  "type": "image/webp"
+ },
+ "mummum-wok-med-kylling-og-kokosmaelk": {
+  "status": 200,
+  "color": "#bca082",
+  "kb": 134,
+  "type": "image/jpeg"
+ },
+ "mummum-grillede-tigerrejer-med-hvidloeg": {
+  "status": 200,
+  "color": "#b3a36f",
+  "kb": 79,
+  "type": "image/webp"
+ },
+ "mummum-panerede-koteletter-med-fritter-og-tzatziki": {
+  "status": 200,
+  "color": "#a68167",
+  "kb": 62,
+  "type": "image/webp"
+ },
+ "mummum-grillet-tun-med-mangosalat": {
+  "status": 200,
+  "color": "#a09057",
+  "kb": 82,
+  "type": "image/webp"
+ },
+ "mummum-pulled-chicken-pita": {
+  "status": 200,
+  "color": "#a18b6d",
+  "kb": 417,
+  "type": "image/webp"
+ },
+ "mummum-kyllingefrikadeller-med-feta": {
+  "status": 200,
+  "color": "#be955f",
+  "kb": 63,
+  "type": "image/webp"
+ }
+}
