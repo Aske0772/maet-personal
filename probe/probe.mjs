@@ -1,89 +1,129 @@
-// Source check, run in GitHub Actions: robots.txt and a few pages per candidate.
-// Prints only short facts (status, rule lines, which endpoints a page mentions).
+// Source check, round 2: sitemaps, product pages and which API hosts the shop
+// public pages carry. Prints only short facts.
 const UA = 'Maet/0.1 (+https://github.com/Aske0772/maet-personal; kildetjek)';
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const uniq = (a) => [...new Set(a)];
+const grep = (text, re, n = 15) => uniq([...text.matchAll(re)].map((m) => m[0].slice(0, 180))).slice(0, n);
 
-async function get(url, accept = 'text/html,application/json') {
-  await sleep(500);
+async function get(url, accept = 'text/html,application/json,application/xml') {
+  await sleep(600);
   try {
     const res = await fetch(url, { headers: { 'User-Agent': UA, Accept: accept }, redirect: 'follow' });
-    const text = await res.text();
-    return { status: res.status, url: res.url, text };
+    return { status: res.status, url: res.url, type: res.headers.get('content-type'), text: await res.text() };
   } catch (e) {
     return { status: 'ERR ' + e.message, text: '' };
   }
 }
+const locs = (xml) => [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((m) => m[1]);
+const head = (label, r) => console.log(`\n### ${label} → ${r.status} ${r.url ?? ''} (${r.text.length} b, ${r.type})`);
 
-function robotsSummary(text) {
-  const out = [];
-  let group = [];
-  for (const raw of text.split('\n')) {
-    const line = raw.trim();
-    if (/^user-agent:/i.test(line)) group.push(line);
-    else if (/^(dis)?allow:|^crawl-delay:|^sitemap:/i.test(line)) out.push(`  [${group.join(' ')}] ${line}`);
-    if (/^(dis)?allow:/i.test(line) === false && /^user-agent:/i.test(line) === false && line === '') group = [];
-  }
-  // Only the groups that apply to everyone, plus sitemaps.
-  return out.filter((l) => /\*|sitemap:/i.test(l)).slice(0, 40).join('\n');
+function ldTypes(html) {
+  const blocks = [...html.matchAll(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
+  return { blocks, types: uniq(blocks.flatMap((b) => grep(b, /"@type"\s*:\s*"[A-Za-z]+"/g, 30))) };
 }
 
-const uniq = (a) => [...new Set(a)];
-function grep(text, re, n = 15) {
-  return uniq([...text.matchAll(re)].map((m) => m[0].slice(0, 160))).slice(0, n);
-}
-
-const ROBOTS = [
-  'https://www.valdemarsro.dk', 'https://www.arla.dk', 'https://madensverden.dk',
-  'https://mummum.dk', 'https://spisbedre.dk', 'https://www.dk-kogebogen.dk',
-  'https://www.bilkatogo.dk', 'https://www.bilka.dk', 'https://www.foetex.dk', 'https://www.netto.dk',
-  'https://www.meny.dk', 'https://spar.dk', 'https://minkobmand.dk', 'https://www.letkoeb.dk',
-  'https://coop.dk', 'https://365discount.coop.dk', 'https://kvickly.coop.dk', 'https://www.lidl.dk'
-];
-
-const PAGES = [
-  // Recipe sites: does a recipe page carry schema.org Recipe JSON-LD?
-  ['https://www.valdemarsro.dk/kylling-i-karry/', 'recipe'],
-  ['https://www.arla.dk/opskrifter/kylling-i-karry/', 'recipe'],
-  ['https://madensverden.dk/kylling-i-karry/', 'recipe'],
-  ['https://mummum.dk/kylling-i-karry/', 'recipe'],
-  ['https://spisbedre.dk/opskrifter/kylling-i-karry', 'recipe'],
-  ['https://www.dk-kogebogen.dk/opskrifter/1/kylling-i-karry/', 'recipe'],
-  // Shops: which API hosts / search keys does the front page reference?
-  ['https://www.bilkatogo.dk/', 'shop'],
-  ['https://www.bilka.dk/mad-og-drikke/', 'shop'],
-  ['https://www.foetex.dk/', 'shop'],
-  ['https://www.netto.dk/', 'shop'],
-  ['https://www.meny.dk/', 'shop'],
-  ['https://spar.dk/', 'shop'],
-  ['https://minkobmand.dk/', 'shop'],
-  ['https://coop.dk/', 'shop'],
-  ['https://365discount.coop.dk/', 'shop']
-];
-
-for (const base of ROBOTS) {
-  const r = await get(base + '/robots.txt', 'text/plain');
-  console.log(`\n### robots ${base} → ${r.status}`);
-  if (typeof r.status === 'number' && r.status < 400) console.log(robotsSummary(r.text));
-}
-
-for (const [url, kind] of PAGES) {
+// --- Recipe sites -------------------------------------------------------------
+async function sitemapTree(url, depth = 0, out = [], max = 6) {
   const r = await get(url);
-  console.log(`\n### ${kind} ${url} → ${r.status} (${r.url ?? ''}, ${r.text.length} bytes)`);
-  if (kind === 'recipe') {
-    const blocks = [...r.text.matchAll(/<script[^>]*application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)].map((m) => m[1]);
-    const types = blocks.flatMap((b) => grep(b, /"@type"\s*:\s*"?[A-Za-z\[\]" ,]+/g, 10));
-    console.log('  ld+json blocks:', blocks.length, 'types:', uniq(types).join(' | '));
-    const recipe = blocks.find((b) => /"Recipe"/.test(b));
-    if (recipe) {
-      for (const k of ['recipeIngredient', 'recipeInstructions', 'totalTime', 'recipeYield', 'image']) {
-        console.log(`  has ${k}:`, recipe.includes(`"${k}"`));
-      }
-      const ing = recipe.match(/"recipeIngredient"\s*:\s*\[([^\]]{0,300})/);
-      if (ing) console.log('  first ingredients:', ing[1].slice(0, 200));
-    }
-  } else {
-    console.log('  api hosts:', grep(r.text, /https?:\/\/[a-z0-9.-]*(api|algolia|search|graphql|commerce|catalog)[a-z0-9.-]*\.[a-z]+[^"'\s<>]{0,60}/gi).join('\n    '));
-    console.log('  algolia:', grep(r.text, /(algolia[A-Za-z]*|appId|applicationId|searchKey|apiKey)["']?\s*[:=]\s*["'][A-Za-z0-9_-]{6,}["']/g).join(' | '));
-    console.log('  scripts:', grep(r.text, /<script[^>]+src="[^"]+"/g, 8).join('\n    '));
+  const l = locs(r.text);
+  console.log(`${'  '.repeat(depth)}- ${url} → ${r.status}, ${l.length} locs`);
+  if (/<sitemapindex/i.test(r.text) && depth < 1) {
+    for (const child of l.slice(0, 40)) console.log(`${'  '.repeat(depth + 1)}· ${child}`);
+    return { index: l };
   }
+  return { urls: l };
+}
+
+async function recipeCheck(label, url) {
+  const r = await get(url);
+  head(`recipe ${label}`, r);
+  const { blocks, types } = ldTypes(r.text);
+  console.log('  ld+json:', blocks.length, types.join(' '));
+  const recipe = blocks.find((b) => /"Recipe"/.test(b));
+  if (recipe) {
+    const ing = recipe.match(/"recipeIngredient"\s*:\s*\[([^\]]{0,240})/);
+    console.log('  Recipe ✓ ingredients:', ing?.[1]);
+    const img = recipe.match(/"image"\s*:\s*(\[[^\]]{0,300}|\{[^}]{0,300}|"[^"]+")/);
+    console.log('  image:', img?.[1]?.slice(0, 300));
+  } else {
+    console.log('  other data:', grep(r.text, /(__NEXT_DATA__|__NUXT__|recipeIngredient|"ingredients"\s*:|"ingredientGroups"|"instructions"\s*:)/g).join(' | '));
+  }
+}
+
+console.log('==== SITEMAPS ====');
+for (const s of [
+  'https://www.valdemarsro.dk/sitemap_index.xml',
+  'https://www.arla.dk/sitemap.index.xml',
+  'https://madensverden.dk/sitemap_index.xml',
+  'https://mummum.dk/sitemap_index.xml',
+  'https://spisbedre.dk/sitemap.xml',
+  'https://www.dk-kogebogen.dk/sitemap/sitemap.xml'
+]) await sitemapTree(s);
+
+// A few recipe-looking URLs from each site's first recipe sitemap.
+async function sample(sitemap, filter) {
+  const r = await get(sitemap);
+  const l = locs(r.text).filter(filter);
+  console.log(`\n${sitemap}: ${l.length} matching, e.g.`, l.slice(0, 3).join(' '));
+  return l;
+}
+const v = await sample('https://www.valdemarsro.dk/post-sitemap.xml', (u) => !/\/(tag|category)\//.test(u));
+if (v[5]) await recipeCheck('valdemarsro', v[5]);
+const a = await sample('https://www.arla.dk/sitemap.recipes.xml', (u) => /\/opskrifter\//.test(u));
+if (a[5]) await recipeCheck('arla', a[5]);
+const sb = await sample('https://spisbedre.dk/sitemap.xml', (u) => /\/opskrifter\//.test(u));
+if (sb[5]) await recipeCheck('spisbedre', sb[5]);
+const dk = await sample('https://www.dk-kogebogen.dk/sitemap/sitemap.xml', (u) => /opskrifter/.test(u));
+if (dk[5]) await recipeCheck('dk-kogebogen', dk[5]);
+
+// --- Shops ---------------------------------------------------------------------
+console.log('\n==== SHOPS ====');
+// Salling / BilkaToGo: product sitemap, one product page's structured data.
+const btgProducts = await sample('https://www.bilkatogo.dk/sitemap-products.xml', () => true);
+if (btgProducts[10]) {
+  const r = await get(btgProducts[10]);
+  head('bilkatogo product', r);
+  const { blocks, types } = ldTypes(r.text);
+  console.log('  ld+json types:', types.join(' '));
+  const prod = blocks.find((b) => /"Product"/.test(b));
+  if (prod) console.log('  product:', prod.replace(/\s+/g, ' ').slice(0, 500));
+}
+// Netto product pages?
+const nettoMap = await get('https://netto.dk/sitemap.xml');
+head('netto sitemap', nettoMap);
+console.log('  ', locs(nettoMap.text).slice(0, 15).join('\n   '));
+const nettoProductMap = locs(nettoMap.text).find((u) => /produkt|product/i.test(u));
+if (nettoProductMap) {
+  const l = locs((await get(nettoProductMap)).text);
+  console.log('  netto product sitemap:', nettoProductMap, l.length, 'e.g.', l.slice(0, 2).join(' '));
+  if (l[10]) {
+    const r = await get(l[10]);
+    head('netto product', r);
+    const prod = ldTypes(r.text).blocks.find((b) => /"Product"/.test(b));
+    console.log('  product:', prod?.replace(/\s+/g, ' ').slice(0, 500));
+  }
+}
+
+// Dagrofa: a MENY store subdomain and the sitemaps.
+for (const u of ['https://meny.dk/meny/sitemap.xml', 'https://parkvej.meny.dk/robots.txt', 'https://parkvej.meny.dk/sitemap.xml']) {
+  const r = await get(u);
+  head('dagrofa ' + u, r);
+  if (u.endsWith('robots.txt')) console.log(r.text.slice(0, 600));
+  else console.log('  ', locs(r.text).length, 'locs:', locs(r.text).slice(0, 8).join(' '));
+}
+const menyProducts = (await get('https://parkvej.meny.dk/sitemap.xml')).text;
+const mp = locs(menyProducts).find((u) => /produkter\//.test(u));
+if (mp) {
+  const r = await get(mp);
+  head('meny product', r);
+  const prod = ldTypes(r.text).blocks.find((b) => /"Product"/.test(b));
+  console.log('  product:', prod?.replace(/\s+/g, ' ').slice(0, 500));
+}
+
+// Coop: anything product-like in the sitemaps?
+for (const u of ['https://coop.dk/sitemap.xml', 'https://365discount.coop.dk/sitemap.xml']) {
+  const r = await get(u);
+  const l = locs(r.text);
+  head('coop ' + u, r);
+  console.log('  ', l.length, 'locs; product-like:', l.filter((x) => /produkt|vare|product/i.test(x)).slice(0, 5).join(' '));
 }
