@@ -2,7 +2,6 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { openDb } from '../src/db.js';
 import { refreshWeek, weekPayload, catalogPayload, weekKey, offerKind } from '../src/week.js';
-import { SourceBlockedError } from '../src/sources/http.js';
 
 const day = 86400000;
 const at = (offsetDays) => new Date(Date.now() + offsetDays * day).toISOString();
@@ -59,16 +58,16 @@ test('refreshWeek stores matched offers and the dishes they unlock', async () =>
   assert.ok(inWeek.includes('kylling-i-karry'));
   assert.ok(inWeek.includes('ovnlaks-kartofler'));
   assert.ok(!inWeek.includes('carbonara'), 'bacon is only a catalog price, not a tilbud');
-  // Every food tilbud counts, also chips that no recipe uses; the TV does not.
-  assert.equal(payload.stores.find((s) => s.id === '9ba51').offerCount, 2);
+  // Every tilbud counts, also chips and the TV that no recipe uses.
+  assert.equal(payload.stores.find((s) => s.id === '9ba51').offerCount, 3);
 });
 
-test('the catalog holds every food item valid now, also those no recipe uses', async () => {
+test('the catalog holds every item valid now, also those no recipe uses', async () => {
   const db = openDb(':memory:');
   const { items } = catalogPayload(db, await refresh(db));
   const ids = items.map((i) => i.id);
-  assert.ok(ids.includes('b'), 'chips are food');
-  assert.ok(!ids.includes('tv'), 'a TV is not');
+  assert.ok(ids.includes('b'), 'chips are kept');
+  assert.ok(ids.includes('tv'), 'so is the TV');
   assert.ok(ids.includes('rema-1') && ids.includes('lidl-1'), 'shelf products are kept');
   assert.ok(!ids.includes('expired') && !ids.includes('future'));
   assert.deepEqual(items.find((i) => i.id === 'b'), {
@@ -162,28 +161,6 @@ test('a source switched off with DISABLED_SOURCES is not called and keeps its pr
   assert.match(payload.errors.join(), /tjek: slået fra/);
   assert.match(payload.errors.join(), /rema: slået fra/);
   assert.equal(payload.sources.find((s) => s.id === 'lidl').ok, true);
-});
-
-test('a source that blocks us is left alone for a day, then tried again', async () => {
-  const db = openDb(':memory:');
-  const t0 = Date.now();
-  await refresh(db, { now: () => t0 });
-  let calls = 0;
-  const blocked = async () => { calls++; throw new SourceBlockedError('https://squid-api.tjek.com/v2/offers', 403); };
-
-  await refresh(db, { fetchOffers: blocked, now: () => t0 + 1000 });
-  assert.equal(calls, 1, 'stops after the first store is blocked');
-  let payload = weekPayload(db, weekKey());
-  assert.equal(payload.offers.kyllingebryst[0].store, '9ba51', 'last good offers survive');
-  assert.match(payload.sources.find((s) => s.id === 'tjek').note, /blokeret \(HTTP 403\)/);
-
-  await refresh(db, { fetchOffers: blocked, now: () => t0 + 2 * 3600_000 });
-  assert.equal(calls, 1, 'not called again inside the cooldown');
-  payload = weekPayload(db, weekKey());
-  assert.match(payload.errors.join(), /tjek: blokeret .* pause til/);
-
-  await refresh(db, { fetchOffers: blocked, now: () => t0 + 25 * 3600_000 });
-  assert.equal(calls, 2, 'tried again after the cooldown');
 });
 
 test('valid prices are carried into a new week when a store cannot be reached', async () => {

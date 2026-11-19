@@ -3,11 +3,10 @@ import { join } from 'node:path';
 import { STORES } from './stores.js';
 import { INGREDIENTS, CATEGORIES } from './ingredients.js';
 import { fetchDealerOffers } from './sources/tjek.js';
-import { isDisabled, SourceBlockedError } from './sources/http.js';
+import { isDisabled } from './sources/http.js';
 import { fetchRemaShelf, REMA_STORE_ID } from './sources/rema.js';
 import { fetchLidlShelf, LIDL_STORE_ID } from './sources/lidl.js';
 import { matchOffer } from './match.js';
-import { isFood } from './food.js';
 import { shelfCategory, SHELF_CATEGORIES } from './shelf-categories.js';
 import { DATA_DIR } from './db.js';
 
@@ -41,24 +40,18 @@ export const SHELF_SOURCES = { [REMA_STORE_ID]: fetchRemaShelf, [LIDL_STORE_ID]:
 // Source names, used by the DISABLED_SOURCES kill switch and the source_runs log.
 export const OFFER_SOURCE = 'tjek';
 const SHELF_SOURCE_NAMES = { [REMA_STORE_ID]: 'rema', [LIDL_STORE_ID]: 'lidl' };
-// A source that blocks us (401/403/429) is left alone for this long.
-const BLOCK_COOLDOWN_HOURS = Number(process.env.BLOCK_COOLDOWN_HOURS ?? 24);
 
 const storeName = (id) => STORES.find((s) => s.id === id)?.name ?? id;
 
-// Why a source must not be called right now, or null when it may.
-export function sourcePause(db, source, now = Date.now()) {
-  if (isDisabled(source)) return `${source}: slået fra (DISABLED_SOURCES)`;
-  const run = db.prepare('SELECT ran_at, ok, note FROM source_runs WHERE source = ?').get(source);
-  if (!run || run.ok || !/blokeret/.test(run.note ?? '')) return null;
-  const until = Date.parse(run.ran_at) + BLOCK_COOLDOWN_HOURS * 3600_000;
-  if (now >= until) return null;
-  return `${source}: ${run.note} – pause til ${new Date(until).toISOString()}`;
+// Why a source must not be called right now, or null when it may: only the
+// DISABLED_SOURCES switch.
+export function sourcePause(db, source) {
+  return isDisabled(source) ? `${source}: slået fra (DISABLED_SOURCES)` : null;
 }
 
 // Fetch every store's avis plus the shelf prices we have, match them to
-// ingredients and store the week's dishes. Every food item is kept, also those no
-// recipe uses, so people can add them to their list themselves ("Tilføj vare"). A source that fails, blocks us or is
+// ingredients and store the week's dishes. Every item is kept, also those no
+// recipe uses, so people can add them to their list themselves ("Tilføj vare"). A source that fails or is
 // switched off keeps its last good prices: those still valid are carried into
 // the new week, so the app never empties because one host went dark.
 export async function refreshWeek(db, {
@@ -73,27 +66,24 @@ export async function refreshWeek(db, {
   const fetched = new Set();
   const runs = []; // [source, ok, note]
 
-  const offerPause = sourcePause(db, OFFER_SOURCE, now());
+  const offerPause = sourcePause(db, OFFER_SOURCE);
   if (offerPause) {
     errors.push(offerPause);
     log(`  ${offerPause}`);
   } else {
-    let blocked = null;
     for (const store of STORES) {
-      if (blocked) break; // one block is enough: stop knocking on that door
       try {
         const got = await fetchOffers(store.id);
         log(`  ${store.name.padEnd(14)} ${got.length} tilbud`);
         offers.push(...got);
         fetched.add(store.id);
       } catch (err) {
-        if (err instanceof SourceBlockedError) blocked = err.message;
         errors.push(`${store.name}: ${err.message}`);
         log(`  ${store.name.padEnd(14)} FEJL ${err.message}`);
       }
     }
-    const ok = !blocked && fetched.size > 0;
-    runs.push([OFFER_SOURCE, ok ? 1 : 0, blocked ?? (ok ? null : 'ingen butik svarede')]);
+    const ok = fetched.size > 0;
+    runs.push([OFFER_SOURCE, ok ? 1 : 0, ok ? null : 'ingen butik svarede']);
   }
 
   const shelf = [];
@@ -101,7 +91,7 @@ export async function refreshWeek(db, {
   for (const [storeId, fetchShelf] of Object.entries(fetchShelves)) {
     const source = SHELF_SOURCE_NAMES[storeId] ?? storeId;
     const label = `${storeName(storeId)} hyldepriser`;
-    const pause = sourcePause(db, source, now());
+    const pause = sourcePause(db, source);
     if (pause) {
       errors.push(pause);
       log(`  ${pause}`);
@@ -156,10 +146,7 @@ export async function refreshWeek(db, {
     db.prepare('DELETE FROM week_recipes WHERE week = ?').run(week);
     for (const o of offers) {
       if (o.price == null || o.price <= 0) continue;
-      const matches = matchOffer(o);
-      // Non-food in the avis (TVs, detergent, clothes) is dropped; all food is kept.
-      if (matches.length === 0 && !isFood(o)) continue;
-      store(o, offerKind(o), matches);
+      store(o, offerKind(o), matchOffer(o));
     }
     // Shelf sources only list food departments, so every product is kept.
     for (const p of shelf) {

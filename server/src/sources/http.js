@@ -1,9 +1,7 @@
 // One polite HTTP client for every source.
 //
-// Rules, so a chain or Tjek can see who we are and tell us to stop instead of
-// blocking us: an honest User-Agent with a contact address, few sequential
-// requests with a pause between them, one retry that respects Retry-After, and
-// a clear "blocked" error on 401/403/429 so week.js can back off for a day.
+// An honest User-Agent with a contact address, few sequential requests with a
+// pause between them, and one retry that respects Retry-After.
 
 const VERSION = '0.1';
 const CONTACT = process.env.CONTACT_EMAIL
@@ -13,15 +11,6 @@ export const USER_AGENT = `Maet/${VERSION} (+${CONTACT}; prototype)`;
 
 const MIN_GAP_MS = Number(process.env.FETCH_GAP_MS ?? 400);
 const TIMEOUT_MS = 20000;
-const BLOCKED = new Set([401, 403, 429]);
-
-export class SourceBlockedError extends Error {
-  constructor(url, status) {
-    super(`blokeret (HTTP ${status}) af ${new URL(url).host}`);
-    this.name = 'SourceBlockedError';
-    this.status = status;
-  }
-}
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
 const lastRequest = new Map(); // host → time of the previous request
@@ -45,7 +34,6 @@ export async function politeFetch(url, { accept = 'application/json', label = ur
     await sleep(retryAfter * 1000);
     res = await request(url, accept);
   }
-  if (BLOCKED.has(res.status)) throw new SourceBlockedError(url, res.status);
   if (!res.ok) throw new Error(`${label}: HTTP ${res.status}`);
   return res;
 }
