@@ -81,6 +81,8 @@ web/
 
 Kun `tilbud` afgør, hvilke retter der kommer i bunken. Vejledende/anslåede beløb vises separat ("heraf ca. 113 kr …"), så brugeren ved præcis, hvad der er sikkert.
 
+**Opdatering af appen:** Hvert build får et id (`version.json`). Når appen åbnes eller kommer frem igen (også som web-app på hjemmeskærmen), tjekker den id'et uden om cachen og genindlæser én gang, hvis der er en nyere version. Ugens priser og kataloget hentes altid frisk fra serveren.
+
 **Friskhed:** serveren henter alt igen højst én gang i døgnet (`REFRESH_HOURS`, standard 24) og ved ugeskift, og tjekker hver time om det er tid. Udløbne tilbud forsvinder af sig selv via deres datoer. En kilde, der fejler eller blokerer, beholder sine sidste gyldige priser, også over et ugeskift. Appen henter nye priser, når den åbnes igen, og hvert 15. minut. "Priser opdateret i dag kl. 10.35" står på uge- og indkøbssiden.
 
 **Opskrifter:** 275 aftensretter fra Arla, Valdemarsro, Madens Verden og Mummum (se [docs/kilder-pr-kaede.md](docs/kilder-pr-kaede.md)). Kun fakta kommer fra kilden: ingredienser, mængder, tid, portioner, billed-URL og link. Fremgangsmåden er skrevet om med egne ord (samme rækkefølge, temperaturer og tider) i `server/data/recipe-text.json`, og under trinene står "Inspireret af <kilde>" med link. Ny import: kør workflowet *Importér opskrifter*, og derefter `node scripts/build-recipes.mjs --report` for at se, hvilke ingredienser der mangler.
