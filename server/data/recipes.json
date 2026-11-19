@@ -7,7 +7,7 @@
   "diet": "vegetar",
   "serves": 4,
   "emoji": "🥗",
-  "hue": 75,
+  "hue": 74,
   "hero": [
    "spinat",
    "champignon"
@@ -70,7 +70,7 @@
    "url": "https://www.arla.dk/opskrifter/orzo-gryde-med-svampe/"
   },
   "image": "https://images.arla.com/recordid/99B61F08-3727-4C09-A4285043738CA37C/orzo-gryde-med-svampe.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#8e9677",
+  "color": "#8f9677",
   "tags": []
  },
  {
@@ -150,7 +150,7 @@
   "diet": "vegetar",
   "serves": 4,
   "emoji": "🥗",
-  "hue": 31,
+  "hue": 33,
   "hero": [
    "salat"
   ],
@@ -220,7 +220,7 @@
    "url": "https://www.arla.dk/opskrifter/burger-med-kartoffelfrikadeller/"
   },
   "image": "https://images.arla.com/recordid/0DF08B99-A802-4863-9BF498435657347E/burger-med-kartoffelfrikadeller.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#b6a28c",
+  "color": "#b6a38c",
   "tags": []
  },
  {
@@ -231,7 +231,7 @@
   "diet": "kod",
   "serves": 6,
   "emoji": "🍖",
-  "hue": 26,
+  "hue": 28,
   "hero": [
    "koteletter"
   ],
@@ -289,7 +289,7 @@
    "url": "https://www.arla.dk/opskrifter/krydret-svinekam-med-glaserede-log/"
   },
   "image": "https://images.arla.com/recordid/2bfd518a-fdeb-4a3c-8515-ac5d00cbc63e/krydret-svinekam-med-glaserede-log.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#664a34",
+  "color": "#664b34",
   "tags": []
  },
  {
@@ -596,7 +596,7 @@
   "diet": "vegetar",
   "serves": 4,
   "emoji": "🥗",
-  "hue": 1,
+  "hue": 0,
   "hero": [
    "rodbeder"
   ],
@@ -647,17 +647,19 @@
    ]
   ],
   "steps": [
-   "Kog rødbeder, kartofler, rødløg og hvidløg i bouillonen under låg, til alt er mørt.",
-   "Blend suppen glat.",
-   "Smag til med eddike, sukker, salt og peber, og varm den igennem.",
-   "Server med en klat creme fraiche, finthakket rødløg og ristet groft brød."
+   "Bring bouillonen i kog i en gryde.",
+   "Kom rødbeder, kartofler, rødløg og hvidløg i. Læg låg på og lad grøntsagerne koge ved svag varme i ca. ½ time, til de er møre.",
+   "Blend suppen i små portioner – fyld kun blenderen en tredjedel op, og blend hver portion få sekunder ved højeste hastighed.",
+   "Hæld suppen tilbage i gryden og bring den i kog igen. Smag til med eddike, sukker, salt og peber.",
+   "Stil creme fraiche og finthakket rødløg frem i hver sin skål.",
+   "Server suppen rygende varm i varme skåle med ristet groft brød."
   ],
   "source": {
    "name": "Arla",
    "url": "https://www.arla.dk/opskrifter/rodbedesuppe/"
   },
   "image": "https://images.arla.com/recordid/2D6A488A-6063-4AE0-8F79C727DC56A2AC/rodbedesuppe.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#67302f",
+  "color": "#673030",
   "tags": []
  },
  {
@@ -735,7 +737,7 @@
    "url": "https://www.arla.dk/opskrifter/grillede-koteletter-og-blomkal/"
   },
   "image": "https://images.arla.com/recordid/afbfe5e045e147c6ada3aa47008134be/grillede-koteletter-og-blomkal.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#ad9474",
+  "color": "#ad9473",
   "tags": []
  },
  {
@@ -1056,7 +1058,7 @@
    "url": "https://www.arla.dk/opskrifter/grask-pastasalat/"
   },
   "image": "https://images.arla.com/recordid/423B14F6-4C0F-46B0-9D9D9FE1CF4CD33E/grask-pastasalat.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#878254",
+  "color": "#878253",
   "tags": []
  },
  {
@@ -1204,7 +1206,7 @@
   "diet": "vegetar",
   "serves": 4,
   "emoji": "🥗",
-  "hue": 17,
+  "hue": 18,
   "hero": [
    "peberfrugt",
    "hakkede_tomater"
@@ -1270,7 +1272,7 @@
    "url": "https://www.arla.dk/opskrifter/peberfrugter-i-chilisauce/"
   },
   "image": "https://images.arla.com/recordid/21B97941-F558-42C6-BF5D9E0691816E56/peberfrugter-i-chilisauce.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#976855",
+  "color": "#976854",
   "tags": []
  },
  {
@@ -1281,7 +1283,7 @@
   "diet": "vegetar",
   "serves": 4,
   "emoji": "🥗",
-  "hue": 35,
+  "hue": 36,
   "hero": [
    "squash"
   ],
@@ -1367,7 +1369,7 @@
    "url": "https://www.arla.dk/opskrifter/curry-med-sorte-bonner/"
   },
   "image": "https://images.arla.com/recordid/68CF346F-53B3-485C-91B77137F3A08844/picture.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#9a6f32",
+  "color": "#996f32",
   "tags": []
  },
  {
@@ -1378,7 +1380,7 @@
   "diet": "fisk",
   "serves": 4,
   "emoji": "🐟",
-  "hue": 28,
+  "hue": 29,
   "hero": [
    "laks"
   ],
@@ -1444,7 +1446,7 @@
    "url": "https://www.arla.dk/opskrifter/pasta-med-laks/"
   },
   "image": "https://images.arla.com/recordid/799F26F8-2E3A-4C78-97B75D5255D55FE9/picture.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#a5866a",
+  "color": "#a5876a",
   "tags": []
  },
  {
@@ -1524,7 +1526,7 @@
   "diet": "vegetar",
   "serves": 4,
   "emoji": "🥗",
-  "hue": 21,
+  "hue": 22,
   "hero": [
    "squash",
    "mozzarella"
@@ -1587,7 +1589,7 @@
    "url": "https://www.arla.dk/opskrifter/spaghetti-squash/"
   },
   "image": "https://images.arla.com/recordid/28C47EA3-3672-4B10-970C90DD1F2BEF41/picture.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#9e8679",
+  "color": "#9d8679",
   "tags": []
  },
  {
@@ -1669,7 +1671,7 @@
    "url": "https://www.arla.dk/opskrifter/paprikagryde/"
   },
   "image": "https://images.arla.com/recordid/75CDA197-5D43-45E7-91FE7D517736B128/paprikagryde.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#a45e44",
+  "color": "#a55e44",
   "tags": []
  },
  {
@@ -2009,7 +2011,7 @@
    "url": "https://www.arla.dk/opskrifter/oksekodssuppe/"
   },
   "image": "https://images.arla.com/recordid/0b6c3b37eb3e4eca9f96a86400b0f8c5/oksekodssuppe.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#96442f",
+  "color": "#97442f",
   "tags": []
  },
  {
@@ -2089,7 +2091,7 @@
   "diet": "vegetar",
   "serves": 6,
   "emoji": "🥗",
-  "hue": 46,
+  "hue": 47,
   "hero": [
    "ris"
   ],
@@ -2147,7 +2149,7 @@
    "url": "https://www.arla.dk/opskrifter/risotto/"
   },
   "image": "https://images.arla.com/recordid/3E6B1E56-30B8-42BD-B9DFA227F90363AA/risotto.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#8e835e",
+  "color": "#8e835d",
   "tags": []
  },
  {
@@ -2568,7 +2570,7 @@
   "diet": "kod",
   "serves": 2,
   "emoji": "🍖",
-  "hue": 39,
+  "hue": 40,
   "hero": [
    "kyllingebryst"
   ],
@@ -2613,7 +2615,7 @@
    "url": "https://www.arla.dk/opskrifter/nem-kyllingepande/"
   },
   "image": "https://images.arla.com/recordid/B27AB736-3236-42D1-8B2C0569846B9A28/picture.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#a78441",
+  "color": "#a68441",
   "tags": []
  },
  {
@@ -2706,7 +2708,7 @@
    "url": "https://www.arla.dk/opskrifter/spaghetti-bolognese/"
   },
   "image": "https://images.arla.com/recordid/4FFBCBE4-1C50-435C-A3EC862C1A46FC3F/spaghetti-bolognese.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#8b572d",
+  "color": "#8b582d",
   "tags": []
  },
  {
@@ -2891,7 +2893,7 @@
    "url": "https://www.arla.dk/opskrifter/thaisuppe-med-nudler/"
   },
   "image": "https://images.arla.com/recordid/723C8AD3-9DF0-4972-844BEC49ED49052A/thaisuppe-med-nudler.jpg?width=600&height=840&mode=crop&format=webp&quality=70",
-  "color": "#927c47",
+  "color": "#937c47",
   "tags": []
  },
  {
@@ -9018,11 +9020,11 @@
    ]
   ],
   "steps": [
-   "Brun kødet i olie med løg, hvidløg, oregano og timian.",
-   "Tilsæt gulerødder, bladselleri, squash, tomatpuré, tomater og rødvin, og lad saucen simre så længe som muligt. Smag til.",
-   "Lav en bechamel af smør, mel og mælk, krydret med muskat, salt og peber.",
-   "Tænd ovnen på 175°. Byg lasagnen i lag af kødsauce, plader og bechamel, og top med mozzarella.",
-   "Bag i 20–25 min, til den er gylden."
+   "Varm olien i en gryde, og steg løg og hvidløg bløde. Skru op til høj varme og brun kødet.",
+   "Tilsæt oregano, timian, gulerødder, bladselleri, squash, tomatpuré, hakkede tomater og rødvin (eller bouillon). Læg låg på og lad saucen simre i 2–6 timer – jo længere, jo bedre. Smag til med salt og peber.",
+   "Lav bechamel: Smelt smørret i en lille gryde, pisk mel i, og pisk mælken i lidt ad gangen, til saucen er jævn. Smag til med muskat, salt og peber, og rør halvdelen af mozzarellaen i.",
+   "Tænd ovnen på 175° varmluft. Læg lasagnen i et fad i lag: kødsauce, plader og bechamel – og slut med bechamel.",
+   "Fordel resten af mozzarellaen ovenpå og bag lasagnen midt i ovnen i 20–25 min, til pladerne er møre og overfladen gylden."
   ],
   "source": {
    "name": "Valdemarsro",

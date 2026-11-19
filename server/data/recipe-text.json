@@ -90,10 +90,12 @@
   "title": "Rødbedesuppe",
   "blurb": "Cremet suppe af rødbeder og kartofler med creme fraiche og ristet brød.",
   "steps": [
-   "Kog rødbeder, kartofler, rødløg og hvidløg i bouillonen under låg, til alt er mørt.",
-   "Blend suppen glat.",
-   "Smag til med eddike, sukker, salt og peber, og varm den igennem.",
-   "Server med en klat creme fraiche, finthakket rødløg og ristet groft brød."
+   "Bring bouillonen i kog i en gryde.",
+   "Kom rødbeder, kartofler, rødløg og hvidløg i. Læg låg på og lad grøntsagerne koge ved svag varme i ca. ½ time, til de er møre.",
+   "Blend suppen i små portioner – fyld kun blenderen en tredjedel op, og blend hver portion få sekunder ved højeste hastighed.",
+   "Hæld suppen tilbage i gryden og bring den i kog igen. Smag til med eddike, sukker, salt og peber.",
+   "Stil creme fraiche og finthakket rødløg frem i hver sin skål.",
+   "Server suppen rygende varm i varme skåle med ristet groft brød."
   ]
  },
  "arla-grillede-koteletter-og-blomkal": {
@@ -1444,11 +1446,11 @@
  "valdemarsro-lasagne": {
   "blurb": "Klassisk lasagne med kødsauce fuld af grøntsager og hjemmelavet bechamel.",
   "steps": [
-   "Brun kødet i olie med løg, hvidløg, oregano og timian.",
-   "Tilsæt gulerødder, bladselleri, squash, tomatpuré, tomater og rødvin, og lad saucen simre så længe som muligt. Smag til.",
-   "Lav en bechamel af smør, mel og mælk, krydret med muskat, salt og peber.",
-   "Tænd ovnen på 175°. Byg lasagnen i lag af kødsauce, plader og bechamel, og top med mozzarella.",
-   "Bag i 20–25 min, til den er gylden."
+   "Varm olien i en gryde, og steg løg og hvidløg bløde. Skru op til høj varme og brun kødet.",
+   "Tilsæt oregano, timian, gulerødder, bladselleri, squash, tomatpuré, hakkede tomater og rødvin (eller bouillon). Læg låg på og lad saucen simre i 2–6 timer – jo længere, jo bedre. Smag til med salt og peber.",
+   "Lav bechamel: Smelt smørret i en lille gryde, pisk mel i, og pisk mælken i lidt ad gangen, til saucen er jævn. Smag til med muskat, salt og peber, og rør halvdelen af mozzarellaen i.",
+   "Tænd ovnen på 175° varmluft. Læg lasagnen i et fad i lag: kødsauce, plader og bechamel – og slut med bechamel.",
+   "Fordel resten af mozzarellaen ovenpå og bag lasagnen midt i ovnen i 20–25 min, til pladerne er møre og overfladen gylden."
   ]
  },
  "valdemarsro-gulerodssuppe": {
