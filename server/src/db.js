@@ -70,7 +70,14 @@ function seedRecipes(db) {
       emoji=excluded.emoji, hue=excluded.hue, data=excluded.data
   `);
   for (const r of RECIPES) {
-    const data = JSON.stringify({ hero: r.hero, ingredients: r.ingredients, steps: r.steps });
+    const data = JSON.stringify({
+      hero: r.hero, ingredients: r.ingredients, steps: r.steps,
+      // Imported recipes: where they come from, and their photo on the source's server.
+      source: r.source ?? null, image: r.image ?? null, color: r.color ?? null, tags: r.tags ?? []
+    });
     upsert.run(r.id, r.title, r.blurb, r.minutes, r.diet, r.serves, r.emoji, r.hue, data);
   }
+  // Dishes no longer in the library leave the db (and the deck).
+  const ids = RECIPES.map((r) => r.id);
+  db.prepare(`DELETE FROM recipes WHERE id NOT IN (${ids.map(() => '?').join(',')})`).run(...ids);
 }

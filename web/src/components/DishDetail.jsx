@@ -176,9 +176,17 @@ export function DishDetail({ data, recipe, item, mode, prefs, plan, saved, onTog
             )}
           </div>
         ) : (
-          <ol className="detail-steps" role="tabpanel">
-            {recipe.steps.map((s, i) => <li key={i}>{s}</li>)}
-          </ol>
+          <div role="tabpanel">
+            <ol className="detail-steps">
+              {recipe.steps.map((s, i) => <li key={i}>{s}</li>)}
+            </ol>
+            {recipe.source && (
+              <p className="detail-source">
+                Inspireret af <a href={recipe.source.url} target="_blank" rel="noopener noreferrer">{recipe.source.name}</a>
+                {' '}· trinene er skrevet med egne ord
+              </p>
+            )}
+          </div>
         )}
       </div>
 

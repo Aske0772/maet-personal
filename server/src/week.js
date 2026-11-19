@@ -295,7 +295,10 @@ export function weekPayload(db, week) {
     return {
       id: r.id, title: r.title, blurb: r.blurb, minutes: r.minutes, diet: r.diet,
       serves: r.serves, emoji: r.emoji, hue: r.hue, inWeek: !!r.in_week,
-      image: r.image ?? imageFor(r.id),
+      image: data.image ?? r.image ?? imageFor(r.id),
+      color: data.color ?? null,
+      source: data.source ?? null,
+      tags: data.tags ?? [],
       hero: data.hero,
       ingredients: data.ingredients.map(([id, qty]) => ({ id, qty })),
       steps: data.steps

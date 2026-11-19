@@ -313,6 +313,8 @@ ul, ol { margin: 0; padding: 0; }
 }
 .ing-box.is-on .box-check { background: #fff; color: #111318; }
 .detail-steps { padding-left: 22px; display: flex; flex-direction: column; gap: 12px; font-size: 15px; line-height: 1.5; }
+.detail-source { margin-top: 16px; font-size: 13px; color: rgba(255, 255, 255, 0.7); }
+.detail-source a { color: var(--accent-on-photo); font-weight: 650; }
 .detail-steps li::marker { font-family: var(--display); font-weight: 800; color: var(--accent-on-photo); }
 .detail-actions {
   position: sticky; bottom: 0; z-index: 2; display: flex; flex-wrap: wrap; gap: 10px;

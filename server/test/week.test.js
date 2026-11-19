@@ -55,9 +55,9 @@ test('refreshWeek stores matched offers and the dishes they unlock', async () =>
   assert.equal(Object.values(payload.offers).flat().some((o) => o.title.includes('chips')), false);
 
   const inWeek = payload.recipes.filter((r) => r.inWeek).map((r) => r.id);
-  assert.ok(inWeek.includes('kylling-i-karry'));
-  assert.ok(inWeek.includes('ovnlaks-kartofler'));
-  assert.ok(!inWeek.includes('carbonara'), 'bacon is only a catalog price, not a tilbud');
+  assert.ok(inWeek.includes('arla-nem-kyllingepande'));
+  assert.ok(inWeek.includes('valdemarsro-laks-sesam-citron'));
+  assert.ok(!inWeek.includes('valdemarsro-italiensk-pasta-carbonara'), 'bacon is only a catalog price, not a tilbud');
   // Every tilbud counts, also chips and the TV that no recipe uses.
   assert.equal(payload.stores.find((s) => s.id === '9ba51').offerCount, 3);
 });
@@ -98,7 +98,7 @@ test('catalog and shelf prices are kept, labelled by kind', async () => {
 test('every recipe is sent so planned dishes can still be priced', async () => {
   const db = openDb(':memory:');
   const payload = weekPayload(db, await refresh(db));
-  assert.ok(payload.recipes.some((r) => r.id === 'carbonara' && !r.inWeek));
+  assert.ok(payload.recipes.some((r) => r.id === 'valdemarsro-italiensk-pasta-carbonara' && !r.inWeek));
 });
 
 test('a store that fails keeps its last good offers', async () => {
@@ -181,7 +181,7 @@ test('valid prices are carried into a new week when a store cannot be reached', 
   const netto = Object.values(payload.offers).flat().filter((o) => o.store === '9ba51');
   assert.deepEqual(netto.map((o) => o.id), ['n1'], 'only the still-valid tilbud is carried');
   assert.equal(payload.offers.ris[0].price, 11.95, 'shelf prices carried too');
-  assert.ok(payload.recipes.find((r) => r.id === 'kylling-i-karry').inWeek, 'carried tilbud still unlock dishes');
+  assert.ok(payload.recipes.find((r) => r.id === 'arla-nem-kyllingepande').inWeek, 'carried tilbud still unlock dishes');
 });
 
 test('offers in the payload carry no images', async () => {

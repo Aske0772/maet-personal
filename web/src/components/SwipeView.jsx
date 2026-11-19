@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { DishArt } from './ui.jsx';
+import { DishArt, preloadImages } from './ui.jsx';
 import { X, Plus, Undo, Store } from './icons.jsx';
 import { heroOffers, portionPrice, suggestions } from '../lib/pricing.js';
 import { rankDeck } from '../lib/rank.js';
@@ -62,6 +62,12 @@ export function SwipeView({ data, prefs, setPrefs, plan = [], seen, past, onSkip
 
   const [fling, setFling] = useState(null);
   const top = deck[0];
+
+  // The card you see is always loaded: the next five photos are fetched and decoded
+  // ahead, and each swipe moves the window one on.
+  useEffect(() => {
+    preloadImages(deck.slice(0, 6).map((x) => x.recipe.image));
+  }, [deck]);
 
   useEffect(() => {
     const onKey = (e) => {

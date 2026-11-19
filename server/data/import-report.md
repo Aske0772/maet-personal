@@ -1,0 +1,159 @@
+# Opskriftsimport – rapport
+
+- Importeret: 527 opskrifter
+- Alle ingredienser kan prissættes: **352**
+- Heraf med egne trin (i appen): **275**
+- Uden portioner (sprunget over): 1
+
+## Ingredienser uden match (171)
+
+- 6 × mælkesauce
+- 3 × rispapir
+- 3 × ansjosfileter
+- 2 × pære i tynde skiver
+- 2 × mornaysauce
+- 2 × ærteskud
+- 2 × thaisuppe
+- 2 × store
+- 2 × mørk miso
+- 2 × skinkeschnitzler
+- 2 × falafler
+- 2 × blåskimmelost
+- 2 × blåbær
+- 2 × stenbiderrogn
+- 2 × peberrod
+- 2 × hyldebærsaft
+- 2 × abrikoser
+- 2 × cornichoner
+- 2 × kulør
+- 2 × mørk chokolade
+- 2 × jordskokker
+- 2 × abrikosmarmelade
+- 2 × fennikel
+- 2 × majskolbe
+- 2 × cajunkrydderi
+- 2 × ansjoser
+- 2 × gastrik
+- 2 × kalkun
+- 2 × portion bearnaise
+- 2 × cantaloupemelon
+- 2 × flormelis
+- 1 × stykke skrællet frisk ingefær på størrelse med en valnød
+- 1 × fuldkornsris
+- 1 × udbenet lammekølle
+- 1 × friske blåmuslinger i skal
+- 1 × vodka
+- 1 × gul bede i små tynde stænger
+- 1 × små majstortillaer
+- 1 × blåskimmelost i små stykker
+- 1 × grofthakkede
+- 1 × skyllede
+- 1 × hakket
+- 1 × a38 naturel
+- 1 × fintrevet frisk peberrod
+- 1 × marinerede sild i 2-3 cm strimler
+- 1 × lille bakke karse
+- 1 × fintsnittede røde snackpebere
+- 1 × coleslaw
+- 1 × whiskysauce
+- 1 × strimlet top af forårsløg
+- 1 × blandede grøntsager
+- 1 × afdryppede
+- 1 × afdryppede ferskner fra dåse i små tern
+- 1 × moden surdej der peaker*
+- 1 × finthakket top af forårsløg
+- 1 × kalvelever i meget tynde skiver
+- 1 × rensede kantareller i mindre stykker
+- 1 × bearnaiseessens
+- 1 × høvlet peberrod
+- 1 × havtaskehale i tern
+- 1 × skrællede gule beder i halve skiver
+- 1 × rensede friske blåmuslinger i skal
+- 1 × rensede radiser
+- 1 × tynde skiver bresaola
+- 1 × fuldkornsdurummel
+- 1 × store grillbriketter med høj brændværdi
+- 1 × frossen wok-blanding
+- 1 × ostesauce
+- 1 × tacoskaller
+- 1 × store grofthakkede tomater
+- 1 × papadums
+- 1 × bambusspyd
+- 1 × optøede
+- 1 × let mornaysauce
+- 1 × frosne blåbær
+- 1 × galangarod
+- 1 × kaffirblade
+- 1 × nektarin
+- 1 × suppehøne
+- 1 × dadler
+- 1 × vesterhavsost
+- 1 × miso
+- 1 × sichuan peber
+- 1 × oliven
+- 1 × comté
+- 1 × landskinke
+- 1 × karse
+- 1 × hampefrø
+- 1 × kapersbær
+- 1 × tranebær
+- 1 × dråber kulør
+- 1 × hyldeblomstsaft
+- 1 × fersken
+- 1 × hotdogbrød
+- 1 × kalvebov
+- 1 × grillspyd af træ
+- 1 × dryp sriracha chilisauce
+- 1 × hakket lammekød
+- 1 × bearnaise
+- 1 × ølandshvede
+- 1 × lys tahin
+- 1 × tørrede abrikoser
+- 1 × grand marnier
+- 1 × lammebov
+- 1 × mandler
+- 1 × vagtelæg
+- 1 × nduja
+- 1 × kyllingetern
+- 1 × snackpeber
+- 1 × portion hollandaisesauce
+- 1 × radiser
+- 1 × durummel
+- 1 × store skærisinger
+- 1 × loppeskalsfrø
+- 1 × ribbensteg
+- 1 × boulionterning
+- 1 × palmesukker
+- 1 × kalvesteg
+- 1 × enebær
+- 1 × pankurasp
+- 1 × rødbeder
+- 1 × store ribeye
+- 1 × bimi
+- 1 × baked beans
+- 1 × /2 l vand
+- 1 × dukkah
+- 1 × portion grøntsager
+- 1 × rødtunge
+- 1 × portion hollandaise
+- 1 × sky
+- 1 × ribsgele
+- 1 × kefir
+- 1 × kraftben
+- 1 × portion slagter marinade
+- 1 × skinkemignon
+- 1 × grønne asparges
+- 1 × portion pulled chicken
+- 1 × portion coleslaw
+- 1 × forårsløg
+- 1 × rødbede
+- 1 × frosne jordbær
+- 1 × banan
+- 1 × kammerjunkere
+- 1 × sovsekulør
+- 1 × cornflakes
+- 1 × oksespidsbryst
+- 1 × allround krydderi
+- 1 × sandwich skiver fra de danske familiegårde
+- 1 × vandmelon
+- 1 × kalveschnitzel

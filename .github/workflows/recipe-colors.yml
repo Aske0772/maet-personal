@@ -1,0 +1,23 @@
+# Checks every dish photo loads from its source and stores its main colour
+# (server/data/recipe-colors.json). Started by hand.
+name: Billedfarver
+on: workflow_dispatch
+permissions:
+  contents: write
+jobs:
+  colors:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --prefix server && npm i --no-save --prefix server sharp
+      - working-directory: server
+        run: node scripts/recipe-colors.mjs > data/recipe-colors.json
+      - run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add server/data/recipe-colors.json
+          git commit -m "Billedfarver og billedtjek [skip ci]" || exit 0
+          git pull --rebase -q && git push

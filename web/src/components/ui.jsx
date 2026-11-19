@@ -1,4 +1,4 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { Minus, Plus } from './icons.jsx';
 
 export function Sheet({ open, onClose, children, label }) {
@@ -48,10 +48,36 @@ export function Stepper({ label, value, min = 1, max = 12, onChange, unit }) {
   );
 }
 
+// Photos come from the recipe's own site. Before one has loaded the card shows the
+// photo's main colour, so there is never a white gap; one that fails becomes the plate.
+const failed = new Set();
+const loaded = new Set();
+
+// Fetch and decode photos ahead of the swipe (the next cards in the deck).
+export function preloadImages(urls) {
+  for (const url of urls) {
+    if (!url || loaded.has(url) || failed.has(url)) continue;
+    loaded.add(url);
+    const img = new Image();
+    img.referrerPolicy = 'no-referrer';
+    img.decoding = 'async';
+    img.src = url;
+    img.decode().catch(() => { loaded.delete(url); failed.add(url); });
+  }
+}
+
 // Photo when we have one, otherwise a generated plate in the dish's own colour.
 export function DishArt({ recipe, className = '' }) {
-  if (recipe.image) {
-    return <img className={`dish-art ${className}`} src={recipe.image} alt="" draggable="false" />;
+  const [broken, setBroken] = useState(() => failed.has(recipe.image));
+  if (recipe.image && !broken) {
+    return (
+      <img
+        className={`dish-art ${className}`} src={recipe.image} alt="" draggable="false"
+        referrerPolicy="no-referrer" decoding="async"
+        style={recipe.color ? { backgroundColor: recipe.color } : undefined}
+        onError={() => { failed.add(recipe.image); setBroken(true); }}
+      />
+    );
   }
   const h = recipe.hue;
   return (
