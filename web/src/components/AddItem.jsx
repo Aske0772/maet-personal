@@ -37,18 +37,26 @@ export function AddItem({ stores, storesById, ingredients, countOf, onStep }) {
   const active = words.length > 0 || cat != null;
   const { hits, more } = useMemo(() => {
     if (!items || !active) return { hits: [], more: 0 };
-    const found = [];
+    // The same product twice in one store (Coop prints each avis twice, once without
+    // the pack size) is shown once, with the size when one of them has it.
+    const byKey = new Map();
     for (const i of items) {
       if (!stores.includes(i.store) || (cat && i.cat !== cat)) continue;
       const score = nameScore(i.title, words);
       if (score == null) continue;
-      // The real thing first: Letmælk is the ingredient mælk, Mælkesnitte is not.
-      const ing = i.ing ? norm(ingredients[i.ing]?.name ?? '') : '';
-      const isIngredient = ing && words.some((w) => ing.startsWith(w) || w.endsWith(ing));
-      found.push({ i, rank: (isIngredient ? 0 : 1) * 10 + score });
+      const key = [i.store, norm(i.title), i.price, i.kind].join('|');
+      const cur = byKey.get(key);
+      const sized = (x) => (x.amount > 1 || (x.amount > 0 && x.unit !== 'pcs') ? 1 : 0);
+      if (!cur || sized(i) > sized(cur.i)) byKey.set(key, { i, score: Math.min(score, cur?.score ?? score) });
     }
-    const per = (i) => (i.amount > 0 && (i.unit === 'kg' || i.unit === 'l') ? i.price / i.amount : i.price);
-    found.sort((a, b) => a.rank - b.rank || (a.i.kind !== 'tilbud') - (b.i.kind !== 'tilbud') || per(a.i) - per(b.i));
+    // The real thing first (Letmælk is the ingredient mælk, Kakaomælk is not), then good
+    // word matches, and within those the cheapest first.
+    const isReal = ({ i }) => {
+      const ing = i.ing ? norm(ingredients[i.ing]?.name ?? '') : '';
+      return ing && words.some((w) => ing.startsWith(w) || w.endsWith(ing)) ? 0 : 1;
+    };
+    const found = [...byKey.values()].map((f) => ({ ...f, real: isReal(f) }));
+    found.sort((a, b) => a.real - b.real || (a.score > 0) - (b.score > 0) || a.i.price - b.i.price);
     return { hits: found.slice(0, LIMIT).map((f) => f.i), more: Math.max(0, found.length - LIMIT) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, query, cat, stores]);
