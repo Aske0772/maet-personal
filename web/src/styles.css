@@ -544,3 +544,18 @@ ul, ol { margin: 0; padding: 0; }
   display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; color: inherit; font: inherit;
 }
 .home-idea::after { content: ''; position: absolute; inset: 0; border-radius: 18px; }
+
+/* Ugebudget in the week summary */
+.budget { margin-top: 14px; padding-top: 12px; border-top: 1px solid var(--line); display: flex; flex-direction: column; gap: 8px; }
+.budget-row { display: flex; align-items: center; justify-content: space-between; font-size: 14px; font-weight: 650; }
+.budget-input { display: inline-flex; align-items: center; gap: 6px; font-weight: 600; }
+.budget-input input {
+  width: 88px; height: 36px; padding: 0 12px; border-radius: 999px; border: 1px solid var(--line);
+  background: var(--bg); color: var(--ink); font: inherit; font-size: 16px; text-align: right;
+}
+.budget-input input:focus-visible { outline: 3px solid var(--accent); outline-offset: 2px; }
+.budget .shop-progress { margin-top: 0; }
+.shop-progress.is-over span { background: #c4441c; }
+.budget-left { font-size: 13px; font-weight: 650; color: var(--muted); }
+.budget-left.is-over { color: #c4441c; }
+.glass-chip--over { color: #ffd2c2; }

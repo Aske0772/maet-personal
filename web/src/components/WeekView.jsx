@@ -8,7 +8,7 @@ import { useHoldDrag } from '../lib/useHoldDrag.js';
 
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, onSuggest, onSwipe }) {
+export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, onSuggest, onSwipe, onBudget }) {
   const recipes = Object.fromEntries(data.recipes.map((r) => [r.id, r]));
   const { starts, unplaced } = layoutWeek(plan);
   const placed = plan.filter((p) => starts[p.id] != null);
@@ -117,6 +117,7 @@ export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, on
               Priser opdateret {updatedLabel(data.refreshedAt)}
               {list.approx > 0 && ` · heraf ca. ${kr(list.approx)} vejledende`}
             </div>
+            <Budget budget={prefs.budget} total={list.total} onChange={onBudget} />
           </div>
           <div className={`week-grid ${drag ? 'is-dragging' : ''}`} ref={gridRef}>
             {DAY_SHORT.map((name, i) => (
@@ -178,6 +179,39 @@ export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, on
           )}
         </>
       )}
+    </div>
+  );
+}
+
+// Ugebudget: what the week may cost, and how much of it the list uses (dishes
+// and hand-added items). Empty field = no budget.
+function Budget({ budget, total, onChange }) {
+  const left = budget ? budget - total : null;
+  const share = budget ? Math.min(1, total / budget) : 0;
+  return (
+    <div className="budget">
+      <label className="budget-row">
+        <span>Ugebudget</span>
+        <span className="budget-input">
+          <input
+            type="number" inputMode="numeric" min="0" step="50" placeholder="Intet"
+            value={budget ?? ''} aria-label="Ugebudget i kroner"
+            onChange={(e) => onChange(e.target.value === '' ? null : Math.max(0, Math.round(Number(e.target.value))))}
+          />
+          kr
+        </span>
+      </label>
+      {budget ? (
+        <>
+          <div className={`shop-progress ${left < 0 ? 'is-over' : ''}`} role="progressbar" aria-label="Brugt af budgettet"
+            aria-valuemin={0} aria-valuemax={budget} aria-valuenow={Math.round(total)}>
+            <span style={{ width: `${share * 100}%` }} />
+          </div>
+          <div className={`budget-left ${left < 0 ? 'is-over' : ''}`}>
+            {left >= 0 ? `${kr(left)} tilbage` : `${kr(-left)} over budget`}
+          </div>
+        </>
+      ) : null}
     </div>
   );
 }

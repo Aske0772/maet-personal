@@ -29,7 +29,7 @@ const passes = (filter, recipe, saved, home) => {
   return filter === 'alle' || recipe.diet === filter;
 };
 
-export function SwipeView({ data, prefs, setPrefs, plan = [], seen, past, onSkip, onLike, onUndo, canUndo, onOpen, onStores, onReset }) {
+export function SwipeView({ data, prefs, setPrefs, plan = [], seen, past, budgetLeft = null, onSkip, onLike, onUndo, canUndo, onOpen, onStores, onReset }) {
   const storesById = useMemo(() => Object.fromEntries(data.stores.map((s) => [s.id, s])), [data]);
   const filter = FILTERS.some((f) => f.id === prefs.diet) ? prefs.diet : 'alle';
   const saved = prefs.saved ?? [];
@@ -145,6 +145,11 @@ export function SwipeView({ data, prefs, setPrefs, plan = [], seen, past, onSkip
                   <small>{item.reuses ? 'ekstra pr. portion' : 'pr. portion'}</small>
                 </div>
                 <div className="card-offers">
+                  {budgetLeft != null && item.price * prefs.people > budgetLeft && (
+                    <span className="glass-chip glass-chip--over">
+                      {budgetLeft > 0 ? `Over budget · ${krSmall(budgetLeft)} tilbage` : 'Ugebudgettet er brugt'}
+                    </span>
+                  )}
                   {item.reuses && (
                     <span className="glass-chip glass-chip--reuse">
                       Bruger det, du har: {andList(item.reuses.shared.slice(0, 3).map((id) => data.ingredients[id].name))}

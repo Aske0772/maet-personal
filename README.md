@@ -37,7 +37,7 @@ npm run dev
 
 Miljøvariabler: `API_PORT` (8787), `DB_FILE`, `CONTACT_EMAIL` (kontakt i User-Agent), `DISABLED_SOURCES` (nødbremse: `tjek`, `rema`, `lidl`), `REFRESH_HOURS` (standard 24). Til webbuildet: `BASE_PATH` (sti appen ligger under) og `VITE_WEEK_URL` (hent ugen fra en statisk fil i stedet for `/api/week`).
 
-**GitHub Pages:** `.github/workflows/pages.yml` bygger en statisk version uden server: appen bygges med `BASE_PATH=/idebanken-mad-app/`, og ugens priser hentes i workflowet og lægges ved som `week.json`. Den kører ved hvert push til main og én gang i døgnet. Kræver, at Pages-kilden i repoets indstillinger står til "GitHub Actions".
+**GitHub Pages:** `.github/workflows/pages.yml` bygger en statisk version uden server: appen bygges med `BASE_PATH=/<repo-navn>/` (her `/maet-personal/`), og ugens priser hentes i workflowet og lægges ved som `week.json` og `catalog-<butik>.json`. Nemlig.com's katalog gemmes i Actions-cachen i et døgn, så et push ikke henter det hele igen. Den kører ved hvert push til main og én gang i døgnet. Kræver, at Pages-kilden i repoets indstillinger står til "GitHub Actions".
 
 ## Sådan hænger det sammen
 
@@ -47,14 +47,22 @@ server/
   src/sources/tjek.js   henter tilbud (eTilbudsavis' offentlige API) – kun fakta, førpris fra teksten
   src/sources/rema.js   REMA 1000's hyldepriser (eget webshop-API)
   src/sources/lidl.js   Lidls faste priser (lidl.dk)
-  src/ingredients.js    ~70 ingredienser: enhed, normalpris, regex til at genkende tilbud
+  src/sources/nemlig.js Nemlig.com's hele sortiment (offentlige kategorisider, 1 side/sek., cache 1 døgn)
+  src/sources/size.js   fælles parser til pakkestørrelser ("4 X 125 GR.", "1,5 l")
+  src/ingredients.js    ~120 ingredienser: enhed, normalpris, regex til at genkende tilbud, omregning
   src/match.js          tilbud → ingrediens, inkl. enhedsomregning (kg ↔ stk) og prisfornuftstjek
-  src/recipes.js        34 egne opskrifter med "hero"-ingredienser
+  src/recipes.js        indlæser data/recipes.json (275 aftensretter)
+  src/parse-ingredient.js + ingredient-aliases.js   "1½ dl fløde" → { flode, 150 }
+  scripts/import-recipes.mjs   henter opskrifter (kun fakta) fra Arla, Valdemarsro, Madens Verden, Mummum
+  scripts/build-recipes.mjs    fakta + egne trin (data/recipe-text.json) → data/recipes.json + import-report.md
+  scripts/recipe-colors.mjs    billedtjek og hovedfarve pr. ret (data/recipe-colors.json)
   src/week.js           ugens snapshot: tilbud, matches og retter → SQLite
   src/index.js          GET /api/week, POST /api/refresh, /images
 web/
   src/lib/pricing.js    al prisberegning (hele pakker, billigste butik, delte varer)
-  src/components/       Onboarding, SwipeView (fotokort), DishDetail (glaspanel), WeekView, ListView
+  src/lib/pantry.js     Hjemme: mængder, enheder (g ↔ stk) og hvad retterne bruger
+  src/lib/search.js     ordsøgning delt af Tilføj vare og Hjemme
+  src/components/       Onboarding, SwipeView (fotokort), DishDetail (glaspanel), WeekView, HomeView, ListView
 ```
 
 **Hvilke retter vises?** En ret kommer i bunken, når mindst én af dens hero-ingredienser (fx kyllingebryst i kylling i karry) er på tilbud i en af dine butikker. Bunken sorteres efter pris pr. portion, trukket frem af tilbudsdybden (tilbudspris mod avisens førpris eller kædernes hyldepris). Retter du planlagde de to forrige uger hviler bagerst, medmindre de er på et tilbud med mindst 50 % rabat. Historikken gemmes kun på telefonen (`web/src/lib/rank.js`).
@@ -67,15 +75,21 @@ web/
 |---|---|---|
 | `tilbud` | Ugens avis (gælder ≤ 14 dage) i dine butikker | "Netto · tilbud til fre. 30.10" |
 | `fast` | Langvarige katalogpriser i dine butikker (fx Lidls Madværket) | "Lidl · fast pris" |
-| `hylde` | REMA 1000's og Lidls hyldepriser: hele REMA's sortiment fra deres webshop-API, og Lidls faste hverdagspriser fra lidl.dk (Hverdagsfavoritter og Madværket – kun ca. 40 varer, mest brød, pålæg og sild) | "REMA 1000 · hyldepris" |
-| `reference` | REMA's eller Lidls hyldepris, når du ikke handler i den kæde | "vejledende" + "ca." |
+| `hylde` | Hyldepriser: hele REMA's sortiment fra deres webshop-API (også ikke-mad), hele Nemlig.com's sortiment fra deres offentlige kategorisider, og Lidls faste hverdagspriser fra lidl.dk | "REMA 1000 · hyldepris" |
+| `reference` | Den billigste hyldepris hos REMA, Nemlig eller Lidl, når dine butikker ikke har en | "vejledende" + "ca." |
 | `estimate` | Eget skøn – kun hvis ingen rigtig pris findes | "anslået pris" + "ca." |
 
 Kun `tilbud` afgør, hvilke retter der kommer i bunken. Vejledende/anslåede beløb vises separat ("heraf ca. 113 kr …"), så brugeren ved præcis, hvad der er sikkert.
 
 **Friskhed:** serveren henter alt igen højst én gang i døgnet (`REFRESH_HOURS`, standard 24) og ved ugeskift, og tjekker hver time om det er tid. Udløbne tilbud forsvinder af sig selv via deres datoer. En kilde, der fejler eller blokerer, beholder sine sidste gyldige priser, også over et ugeskift. Appen henter nye priser, når den åbnes igen, og hvert 15. minut. "Priser opdateret i dag kl. 10.35" står på uge- og indkøbssiden.
 
-**Billeder:** Læg `<opskrift-id>.jpg|webp|png` i `server/data/images/`, så bruges de automatisk. Indtil da tegner appen en farvet tallerken pr. ret. Prompts til AI-genererede close-up-fotos (Nano Banana Pro via Figma Weave) ligger i `server/data/image-prompts.json`.
+**Opskrifter:** 275 aftensretter fra Arla, Valdemarsro, Madens Verden og Mummum (se [docs/kilder-pr-kaede.md](docs/kilder-pr-kaede.md)). Kun fakta kommer fra kilden: ingredienser, mængder, tid, portioner, billed-URL og link. Fremgangsmåden er skrevet om med egne ord (samme rækkefølge, temperaturer og tider) i `server/data/recipe-text.json`, og under trinene står "Inspireret af <kilde>" med link. Ny import: kør workflowet *Importér opskrifter*, og derefter `node scripts/build-recipes.mjs --report` for at se, hvilke ingredienser der mangler.
+
+**Billeder:** vises fra kildens server (ligger ikke i repoet) med `referrerpolicy="no-referrer"`. Kortet har billedets hovedfarve som baggrund fra start, de næste 5 billeder i bunken hentes og afkodes på forhånd, og et billede der fejler bliver til en farvet tallerken. Kildernes lange cache-headers gør, at billederne kommer med det samme ved næste besøg.
+
+**Hjemme:** fanen, hvor du skriver hvad du har (kun madvarer, i g, ml eller stk). Prisen trækker det fra, før der købes hele pakker, og det deles på tværs af ugens retter. Swipe-filteret *Fra Hjemme* viser retter, der bruger det.
+
+**Ugebudget:** angives på ugesiden. Den viser, hvad der er tilbage, og swipe-kortet siger til, når en ret ville gå over budgettet.
 
 **Kort og detaljer:** Swipe-kortet viser kun det, der afgør et swipe: foto, titel, tid, pris pr. portion og ugens tilbud. Et tryk på kortet åbner detaljevisningen med dage/personer, pris, basisvarer og fanerne Ingredienser og Opskrift. Hjertet gemmer retten under fanen "Gemte". "Erstat" lader den nye ret tage pladsen for en ret i ugen (den overtager dens dage og personer, og den gamle kommer tilbage i bunken); når ugen ville gå over 7 aftener, er "Erstat en ret" hovedknappen.
 
@@ -93,8 +107,6 @@ Web-appen er bygget mobil-først, så den kan pakkes med [Capacitor](https://cap
 
 ## Næste skridt
 
-- Flere opskrifter (eller AI-genererede ud fra ugens tilbud)
-- Rigtige billeder pr. ret
 - Brugerkonti og deling af indkøbsliste i familien
 - Madpakker, tilbagevendende varer, print af ugeplan
 - Ugentlig automatisk opdatering (cron) i stedet for ved første kald

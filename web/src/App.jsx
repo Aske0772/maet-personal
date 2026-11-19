@@ -16,7 +16,7 @@ import { Sheet, Stepper } from './components/ui.jsx';
 import { Cards, Calendar, List, Home } from './components/icons.jsx';
 
 // pantry: Hjemme, { [ingredientId]: { amount, unit } } – amount null means "har nok".
-const PREFS = { onboarded: false, stores: [], people: 2, diet: 'alle', atHome: [], pantry: {}, saved: [] };
+const PREFS = { onboarded: false, stores: [], people: 2, diet: 'alle', atHome: [], pantry: {}, saved: [], budget: null };
 // Weekly state is tagged with the ISO week and starts fresh when the avis changes.
 // extras: products added by hand in "Tilføj vare" ({ id, store, title, price, amount, unit, kind, until, qty }).
 // plan items: { id, recipeId, days, people, staples, day? } – day 0 = Monday, see lib/week.js.
@@ -213,6 +213,7 @@ export default function App() {
         {tab === 'swipe' && (
           <SwipeView
             data={data} prefs={prefs} setPrefs={setPrefs} plan={state.plan} seen={state.seen} past={past}
+            budgetLeft={prefs.budget && list ? prefs.budget - list.total : null}
             onSkip={onSkip} onLike={onLike} onUndo={onUndo} canUndo={history.length > 0}
             onOpen={(recipe) => setSheet({ recipe, mode: 'add' })}
             onStores={() => setStoresOpen(true)}
@@ -226,6 +227,7 @@ export default function App() {
             onMove={(id, day) => setState((s) => ({ ...s, plan: moveItem(s.plan, id, day) }))}
             onSuggest={(recipe) => setSheet({ recipe, mode: 'add' })}
             onSwipe={() => setTab('swipe')}
+            onBudget={(budget) => setPrefs((p) => ({ ...p, budget }))}
           />
         )}
         {tab === 'list' && (
