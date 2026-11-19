@@ -5,7 +5,7 @@ import { Stepper } from './ui.jsx';
 const DEFAULT = ['9ba51', '11deC', '71c90'];
 
 export function Onboarding({ data, onDone }) {
-  const available = data.stores.filter((s) => s.offerCount > 0).map((s) => s.id);
+  const available = data.stores.filter((s) => (s.offerCount > 0 || s.shelfCount > 0)).map((s) => s.id);
   const [stores, setStores] = useState(DEFAULT.filter((id) => available.includes(id)));
   const [people, setPeople] = useState(2);
   return (

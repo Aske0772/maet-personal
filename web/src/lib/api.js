@@ -16,17 +16,27 @@ export async function fetchWeek({ onWaiting } = {}) {
   throw new Error('Det tog for lang tid at hente tilbudsaviserne');
 }
 
-// Every food item this week, for "Tilføj vare". Several hundred kilobytes, so it is
-// fetched once, when the search is first used, and kept for the session.
-const CATALOG_URL = import.meta.env.VITE_CATALOG_URL ?? '/api/catalog';
-let catalog = null;
-export function fetchCatalog() {
-  catalog ??= fetch(CATALOG_URL).then((res) => {
-    if (res.status !== 200) throw new Error(`Varelisten kunne ikke hentes (${res.status})`);
-    return res.json();
-  }).catch((err) => {
-    catalog = null; // try again next time
-    throw err;
-  });
-  return catalog;
+// Every item this week in a store, for "Tilføj vare" and Hjemme. One file per
+// store (several hundred kilobytes each), so only your stores are fetched, the
+// first time the search is used, and kept for the session.
+const CATALOG_URL = import.meta.env.VITE_CATALOG_URL ?? '/api/catalog?store={store}';
+const catalogs = new Map();
+function storeCatalog(store) {
+  if (!catalogs.has(store)) {
+    catalogs.set(store, fetch(CATALOG_URL.replace('{store}', encodeURIComponent(store))).then((res) => {
+      if (res.status !== 200) throw new Error(`Varelisten kunne ikke hentes (${res.status})`);
+      return res.json();
+    }).catch((err) => {
+      catalogs.delete(store); // try again next time
+      throw err;
+    }));
+  }
+  return catalogs.get(store);
+}
+export async function fetchCatalog(stores) {
+  const parts = await Promise.all(stores.map(storeCatalog));
+  return {
+    categories: Object.assign({}, ...parts.map((p) => p.categories)),
+    items: parts.flatMap((p) => p.items)
+  };
 }

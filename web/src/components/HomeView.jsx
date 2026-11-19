@@ -19,9 +19,12 @@ export function HomeView({ data, prefs, pantry, onChange, onOpen }) {
 
   // Products are only a way to find the ingredient ("Barilla spaghetti" → pasta), so
   // the catalog loads the first time someone types.
+  const storeKey = prefs.stores.join(',');
+  const [loadedFor, setLoadedFor] = useState('');
   const load = () => {
-    if (catalog) return;
-    fetchCatalog().then(setCatalog).catch((e) => setLoadError(e.message));
+    if (catalog && loadedFor === storeKey) return;
+    setLoadedFor(storeKey);
+    fetchCatalog(prefs.stores).then(setCatalog).catch((e) => setLoadError(e.message));
   };
 
   const words = wordsOf(query);

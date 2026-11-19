@@ -14,7 +14,9 @@ export const STORES = [
   { id: '267e1m', slug: 'meny', name: 'MENY', color: '#C8102E' },
   { id: '88ddE', slug: 'spar', name: 'SPAR', color: '#00843D' },
   { id: '603dfL', slug: 'minkobmand', name: 'Min Købmand', color: '#E30613' },
-  { id: 'f6f54', slug: 'letkob', name: 'LET-KØB', color: '#F28C00' }
+  { id: 'f6f54', slug: 'letkob', name: 'LET-KØB', color: '#F28C00' },
+  // Online supermarket: no avis on Tjek, but its whole assortment with shelf prices.
+  { id: 'nemlig', slug: 'nemlig', name: 'Nemlig.com', color: '#E4002B', tjek: false }
 ];
 
 export const DEFAULT_STORES = ['9ba51', '11deC', '71c90'];

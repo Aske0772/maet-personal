@@ -14,7 +14,11 @@ export const SHELF_CATEGORIES = {
   kolonial: 'Kolonial',
   frost: 'Frost',
   drikke: 'Drikke',
-  snacks: 'Snacks & søde sager'
+  snacks: 'Snacks & søde sager',
+  husholdning: 'Husholdning',
+  pleje: 'Personlig pleje',
+  baby: 'Baby',
+  andet: 'Andet'
 };
 
 const L = 'a-zæøåäöü';

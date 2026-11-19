@@ -189,3 +189,21 @@ test('offers in the payload carry no images', async () => {
   const payload = weekPayload(db, await refresh(db));
   assert.ok(Object.values(payload.offers).flat().every((o) => !('image' in o)));
 });
+
+test('non-food shelf products are in the catalog but never matched to an ingredient', async () => {
+  const db = openDb(':memory:');
+  const NEMLIG = [
+    { ...SHELF[0], id: 'nemlig-1', storeId: 'nemlig', heading: 'Ris parboiled', price: 13.5, cat: null, food: true },
+    { id: 'nemlig-2', storeId: 'nemlig', heading: 'Opvasketabs citron', description: '40 stk.', price: 59,
+      prePrice: null, quantity: { unit: 'pcs', amount: 40 }, image: null, runFrom: null, runTill: null, cat: 'husholdning', food: false }
+  ];
+  const week = await refresh(db, { fetchShelves: { ...SHELVES, nemlig: async () => NEMLIG } });
+  const payload = weekPayload(db, week);
+  // Nemlig's rice is kept next to REMA's: shelf prices are picked per store.
+  assert.deepEqual(payload.offers.ris.filter((o) => o.kind === 'hylde').map((o) => o.store).sort(), ['11deC', 'nemlig']);
+  assert.equal(Object.values(payload.offers).flat().some((o) => o.title.includes('Opvask')), false);
+  const tabs = catalogPayload(db, week).items.find((i) => i.id === 'nemlig-2');
+  assert.equal(tabs.cat, 'husholdning');
+  assert.equal(tabs.ing, null);
+  assert.equal(payload.stores.find((s) => s.id === 'nemlig').shelfCount, 2);
+});

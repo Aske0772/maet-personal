@@ -49,6 +49,12 @@ export function openDb(file = process.env.DB_FILE ?? join(DATA_DIR, 'mad.db')) {
     db.exec('ALTER TABLE offers ADD COLUMN size_amount REAL');
     db.exec('ALTER TABLE offers ADD COLUMN size_unit TEXT');
   }
+  // Aisle from the shop itself (household, baby …) and whether it is food at all:
+  // non-food is kept for "Tilføj vare" but never matched to recipes.
+  if (!db.prepare('PRAGMA table_info(offers)').all().some((c) => c.name === 'cat')) {
+    db.exec('ALTER TABLE offers ADD COLUMN cat TEXT');
+    db.exec('ALTER TABLE offers ADD COLUMN food INTEGER NOT NULL DEFAULT 1');
+  }
   seedRecipes(db);
   return db;
 }

@@ -6,7 +6,7 @@
 const VERSION = '0.1';
 const CONTACT = process.env.CONTACT_EMAIL
   ? `mailto:${process.env.CONTACT_EMAIL}`
-  : 'https://github.com/Aske0772/idebanken-mad-app';
+  : 'https://github.com/Aske0772/maet-personal';
 export const USER_AGENT = `Maet/${VERSION} (+${CONTACT}; prototype)`;
 
 const MIN_GAP_MS = Number(process.env.FETCH_GAP_MS ?? 400);
@@ -22,9 +22,10 @@ export function isDisabled(source) {
     .split(',').map((s) => s.trim().toLowerCase()).includes(source.toLowerCase());
 }
 
-export async function politeFetch(url, { accept = 'application/json', label = url } = {}) {
+// gap: a longer pause for hosts we read many pages from (never shorter than MIN_GAP_MS).
+export async function politeFetch(url, { accept = 'application/json', label = url, gap = 0 } = {}) {
   const host = new URL(url).host;
-  const wait = (lastRequest.get(host) ?? 0) + MIN_GAP_MS - Date.now();
+  const wait = (lastRequest.get(host) ?? 0) + Math.max(MIN_GAP_MS, gap) - Date.now();
   if (wait > 0) await sleep(wait);
 
   let res = await request(url, accept);

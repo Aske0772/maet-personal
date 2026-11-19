@@ -93,7 +93,7 @@ export function ListView({ data, list, checked, stores, countOf, onCheck, onStep
               <span>{store ? '' : 'ca. '}{kr(g.total)}</span>
             </h2>
             {!store && (
-              <p className="shop-group-hint">Ingen pris i dine butikker. Prisen er REMA 1000's hyldepris eller et skøn.</p>
+              <p className="shop-group-hint">Ingen pris i dine butikker. Prisen er en hyldepris fra REMA 1000 eller Nemlig.com, eller et skøn.</p>
             )}
             <ul className="shop-items">
               {g.items.map((i) => {

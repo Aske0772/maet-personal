@@ -5,8 +5,8 @@
 // Where a price comes from, best first:
 //   tilbud    – this week's avis in one of your stores
 //   fast      – a long-running catalog price in one of your stores
-//   hylde     – REMA 1000's shelf price (exact when REMA is one of your stores)
-//   reference – REMA's shelf price when you don't shop at REMA (approximate)
+//   hylde     – a shelf price (REMA 1000, Lidl, Nemlig.com) in one of your stores
+//   reference – the cheapest shelf price elsewhere, when your stores have none (approximate)
 //   estimate  – our own estimate, only when no real price exists (approximate)
 
 const EPS = 1e-9;

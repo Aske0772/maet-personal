@@ -6,6 +6,7 @@ import { fetchDealerOffers } from './sources/tjek.js';
 import { isDisabled } from './sources/http.js';
 import { fetchRemaShelf, REMA_STORE_ID } from './sources/rema.js';
 import { fetchLidlShelf, LIDL_STORE_ID } from './sources/lidl.js';
+import { fetchNemligShelf, NEMLIG_STORE_ID } from './sources/nemlig.js';
 import { matchOffer } from './match.js';
 import { shelfCategory, SHELF_CATEGORIES } from './shelf-categories.js';
 import { DATA_DIR } from './db.js';
@@ -36,10 +37,14 @@ export function offerKind(offer) {
 }
 
 // Chains whose everyday (shelf) prices we can read, by store id.
-export const SHELF_SOURCES = { [REMA_STORE_ID]: fetchRemaShelf, [LIDL_STORE_ID]: fetchLidlShelf };
+export const SHELF_SOURCES = {
+  [REMA_STORE_ID]: fetchRemaShelf,
+  [LIDL_STORE_ID]: fetchLidlShelf,
+  [NEMLIG_STORE_ID]: () => fetchNemligShelf({ cacheDir: join(DATA_DIR, 'cache'), log: console.log })
+};
 // Source names, used by the DISABLED_SOURCES kill switch and the source_runs log.
 export const OFFER_SOURCE = 'tjek';
-const SHELF_SOURCE_NAMES = { [REMA_STORE_ID]: 'rema', [LIDL_STORE_ID]: 'lidl' };
+const SHELF_SOURCE_NAMES = { [REMA_STORE_ID]: 'rema', [LIDL_STORE_ID]: 'lidl', [NEMLIG_STORE_ID]: 'nemlig' };
 
 const storeName = (id) => STORES.find((s) => s.id === id)?.name ?? id;
 
@@ -71,7 +76,7 @@ export async function refreshWeek(db, {
     errors.push(offerPause);
     log(`  ${offerPause}`);
   } else {
-    for (const store of STORES) {
+    for (const store of STORES.filter((s) => s.tjek !== false)) {
       try {
         const got = await fetchOffers(store.id);
         log(`  ${store.name.padEnd(14)} ${got.length} tilbud`);
@@ -115,8 +120,8 @@ export async function refreshWeek(db, {
   );
   const insertOffer = db.prepare(`
     INSERT OR REPLACE INTO offers
-      (id, week, store_id, heading, description, price, pre_price, image, run_from, run_till, kind, size_amount, size_unit)
-    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      (id, week, store_id, heading, description, price, pre_price, image, run_from, run_till, kind, size_amount, size_unit, cat, food)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `);
   const insertMatch = db.prepare(
     'INSERT OR REPLACE INTO offer_matches (offer_id, week, ingredient_id, amount, assumed) VALUES (?, ?, ?, ?, ?)'
@@ -127,7 +132,8 @@ export async function refreshWeek(db, {
   // Only facts are stored: name, pack size, price, before-price, validity. Never images.
   const store = (o, kind, matches) => {
     insertOffer.run(o.id, week, o.storeId, o.heading, o.description, o.price, o.prePrice,
-      null, o.runFrom, o.runTill, kind, o.quantity?.amount ?? null, o.quantity?.unit ?? null);
+      null, o.runFrom, o.runTill, kind, o.quantity?.amount ?? null, o.quantity?.unit ?? null,
+      o.cat ?? null, o.food === false ? 0 : 1);
     for (const m of matches) insertMatch.run(o.id, week, m.ingredientId, m.amount, m.assumed ? 1 : 0);
   };
 
@@ -148,10 +154,11 @@ export async function refreshWeek(db, {
       if (o.price == null || o.price <= 0) continue;
       store(o, offerKind(o), matchOffer(o));
     }
-    // Shelf sources only list food departments, so every product is kept.
+    // Every product is kept; only food is matched to recipe ingredients
+    // ("Opvasketabs citron" is not a lemon).
     for (const p of shelf) {
       if (p.price == null || p.price <= 0) continue;
-      store(p, 'hylde', matchOffer(p, { shelf: true }));
+      store(p, 'hylde', p.food === false ? [] : matchOffer(p, { shelf: true }));
     }
     // Stores we did not reach this time keep what is still valid from the last week we did.
     for (const s of STORES) {
@@ -190,8 +197,8 @@ function carryForward(db, week, storeId, group, nowIso) {
   if (!prev) return;
   const valid = '(o.run_till IS NULL OR o.run_till > ?)';
   db.prepare(`
-    INSERT OR IGNORE INTO offers (id, week, store_id, heading, description, price, pre_price, image, run_from, run_till, kind, size_amount, size_unit)
-    SELECT o.id, ?, o.store_id, o.heading, o.description, o.price, o.pre_price, o.image, o.run_from, o.run_till, o.kind, o.size_amount, o.size_unit
+    INSERT OR IGNORE INTO offers (id, week, store_id, heading, description, price, pre_price, image, run_from, run_till, kind, size_amount, size_unit, cat, food)
+    SELECT o.id, ?, o.store_id, o.heading, o.description, o.price, o.pre_price, o.image, o.run_from, o.run_till, o.kind, o.size_amount, o.size_unit, o.cat, o.food
     ${rowsIn} AND ${valid}
   `).run(week, prev, storeId, nowIso);
   db.prepare(`
@@ -246,10 +253,14 @@ export function weekPayload(db, week) {
     db.prepare(`SELECT store_id, COUNT(*) AS n FROM offers o WHERE week = ? AND kind = 'tilbud' AND ${ACTIVE} GROUP BY store_id`)
       .all(week, now, now).map((r) => [r.store_id, r.n])
   );
+  const shelfCounts = Object.fromEntries(
+    db.prepare(`SELECT store_id, COUNT(*) AS n FROM offers o WHERE week = ? AND kind = 'hylde' AND ${ACTIVE} GROUP BY store_id`)
+      .all(week, now, now).map((r) => [r.store_id, r.n])
+  );
   // Chains dropped from STORES may linger in an old database; they are not sent.
   const stores = db.prepare('SELECT * FROM stores').all()
     .filter((s) => STORES.some((x) => x.id === s.id))
-    .map((s) => ({ ...s, offerCount: counts[s.id] ?? 0 }))
+    .map((s) => ({ ...s, offerCount: counts[s.id] ?? 0, shelfCount: shelfCounts[s.id] ?? 0 }))
     .sort((a, b) => STORES.findIndex((x) => x.id === a.id) - STORES.findIndex((x) => x.id === b.id));
 
   const offers = {};
@@ -308,13 +319,20 @@ export function weekPayload(db, week) {
   };
 }
 
-// Cheapest products per unit, plus the smallest pack so small needs aren't forced
-// into a family-size bag.
-function pickShelf(list) {
-  const byUnit = [...list].sort((a, b) => a.price / a.amount - b.price / b.amount);
-  const picked = byUnit.slice(0, SHELF_PER_INGREDIENT);
-  const smallest = [...list].sort((a, b) => a.amount - b.amount)[0];
-  if (smallest && !picked.includes(smallest)) picked.push(smallest);
+// Per store: the cheapest products per unit, plus the smallest pack so small needs
+// aren't forced into a family-size bag. Per store, so someone shopping only at
+// Nemlig still gets Nemlig's price, not just REMA's cheaper ones.
+export function pickShelf(list) {
+  const byStore = new Map();
+  for (const o of list) byStore.set(o.store, [...(byStore.get(o.store) ?? []), o]);
+  const picked = [];
+  for (const items of byStore.values()) {
+    const byUnit = [...items].sort((a, b) => a.price / a.amount - b.price / b.amount);
+    const some = byUnit.slice(0, SHELF_PER_INGREDIENT);
+    const smallest = [...items].sort((a, b) => a.amount - b.amount)[0];
+    if (smallest && !some.includes(smallest)) some.push(smallest);
+    picked.push(...some);
+  }
   return picked;
 }
 
@@ -322,6 +340,7 @@ function pickShelf(list) {
 // a recipe doesn't cover. Kept apart from weekPayload so the week loads fast and the
 // catalog is fetched only when someone opens the search.
 function ingredientOf(r) {
+  if (r.food === 0) return null;
   const offer = {
     heading: r.heading, description: '', price: r.price,
     quantity: r.size_amount ? { amount: r.size_amount, unit: r.size_unit } : null
@@ -329,19 +348,21 @@ function ingredientOf(r) {
   return matchOffer(offer, { shelf: r.kind === 'hylde' })[0]?.ingredientId ?? null;
 }
 
-export function catalogPayload(db, week) {
+// store: one store's catalog, or every store when left out.
+export function catalogPayload(db, week, store = null) {
   const now = new Date().toISOString();
   const items = db.prepare(`
-    SELECT o.id, o.store_id, o.heading, o.price, o.pre_price, o.size_amount, o.size_unit, o.run_till, o.kind
-    FROM offers o WHERE o.week = ? AND ${ACTIVE}
+    SELECT o.id, o.store_id, o.heading, o.price, o.pre_price, o.size_amount, o.size_unit, o.run_till, o.kind, o.cat, o.food
+    FROM offers o WHERE o.week = ? AND ${ACTIVE} AND (? IS NULL OR o.store_id = ?)
     ORDER BY o.heading
-  `).all(week, now, now).map((r) => {
+  `).all(week, now, now, store, store).map((r) => {
     // The recipe ingredient this product is, so an added agurk joins the agurk line.
     const ing = ingredientOf(r);
     return {
       id: r.id, store: r.store_id, title: r.heading, price: r.price, prePrice: r.pre_price,
       amount: r.size_amount, unit: r.size_unit, until: r.run_till, kind: r.kind, ing,
-      cat: shelfCategory(r.heading, ing)
+      // The shop's own aisle for non-food; for food the ingredient's or the name's.
+      cat: r.food === 0 ? r.cat ?? 'andet' : ing ? shelfCategory(r.heading, ing) : r.cat ?? shelfCategory(r.heading, null)
     };
   });
   return { week, generatedAt: now, categories: SHELF_CATEGORIES, items };

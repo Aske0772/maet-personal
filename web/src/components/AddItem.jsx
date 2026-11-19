@@ -8,7 +8,8 @@ import { norm, wordsOf, nameScore } from '../lib/search.js';
 // Shown before the catalog has loaded; the catalog sends the same list.
 const FALLBACK_CATS = {
   gront: 'Frugt & grønt', kod: 'Kød', fisk: 'Fisk', mejeri: 'Mejeri & æg', brod: 'Brød',
-  kolonial: 'Kolonial', frost: 'Frost', drikke: 'Drikke', snacks: 'Snacks & søde sager'
+  kolonial: 'Kolonial', frost: 'Frost', drikke: 'Drikke', snacks: 'Snacks & søde sager',
+  husholdning: 'Husholdning', pleje: 'Personlig pleje', baby: 'Baby', andet: 'Andet'
 };
 const LIMIT = 30;
 // "Tilføj vare": search every food item in your stores this week and put it on
@@ -22,10 +23,13 @@ export function AddItem({ stores, storesById, ingredients, countOf, onStep }) {
   const [error, setError] = useState('');
 
   // The catalog is big, so it is fetched the first time the field or a chip is used.
+  const storeKey = stores.join(',');
+  const [loadedFor, setLoadedFor] = useState('');
   const load = () => {
-    if (catalog) return;
+    if (catalog && loadedFor === storeKey) return;
+    setLoadedFor(storeKey);
     setError('');
-    fetchCatalog().then(setCatalog).catch((e) => setError(e.message));
+    fetchCatalog(stores).then(setCatalog).catch((e) => setError(e.message));
   };
   const items = catalog?.items ?? null;
 
@@ -55,7 +59,7 @@ export function AddItem({ stores, storesById, ingredients, countOf, onStep }) {
     <section className="add-item" aria-label="Tilføj vare">
       <h2 className="shop-group-title"><span>Tilføj vare</span></h2>
       <input
-        type="search" className="add-search" placeholder="Søg fx kaffe, havregryn, æg"
+        type="search" className="add-search" placeholder="Søg fx kaffe, bleer, opvasketabs"
         aria-label="Søg efter en vare i dine butikker" enterKeyHint="search" autoComplete="off"
         value={query} onFocus={load} onChange={(e) => { setQuery(e.target.value); load(); }}
       />

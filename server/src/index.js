@@ -39,11 +39,11 @@ app.get('/api/week', (_req, res) => {
 });
 
 // Every food item this week, for the "Tilføj vare" search.
-app.get('/api/catalog', (_req, res) => {
+app.get('/api/catalog', (req, res) => {
   const latest = latestWeek(db);
   if (!latest) return res.status(202).json({ status: 'refreshing' });
   res.set('Cache-Control', 'no-store');
-  res.json(catalogPayload(db, latest.week));
+  res.json(catalogPayload(db, latest.week, req.query.store ?? null));
 });
 
 app.post('/api/refresh', async (_req, res) => {
