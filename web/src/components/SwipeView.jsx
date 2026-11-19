@@ -4,6 +4,7 @@ import { X, Plus, Undo, Store } from './icons.jsx';
 import { heroOffers, portionPrice, suggestions } from '../lib/pricing.js';
 import { rankDeck } from '../lib/rank.js';
 import { krSmall, andList } from '../lib/format.js';
+import { usesPantry } from '../lib/pantry.js';
 
 const FILTERS = [
   { id: 'alle', label: 'Alle' },
@@ -11,6 +12,7 @@ const FILTERS = [
   { id: 'fisk', label: 'Fisk' },
   { id: 'vegetar', label: 'Vegetar' },
   { id: 'hurtig', label: 'Hurtig' },
+  { id: 'hjemme', label: 'Fra Hjemme' },
   { id: 'gemte', label: 'Gemte' }
 ];
 
@@ -20,8 +22,9 @@ export const DIET_LABEL = { kod: 'Kød', fisk: 'Fisk', vegetar: 'Vegetar' };
 // what it adds per portion is at most this share of its own portion price.
 export const REUSE_SHARE = 0.6;
 
-const passes = (filter, recipe, saved) => {
+const passes = (filter, recipe, saved, home) => {
   if (filter === 'hurtig') return recipe.minutes <= 30;
+  if (filter === 'hjemme') return home.length > 0;
   if (filter === 'gemte') return saved.includes(recipe.id);
   return filter === 'alle' || recipe.diet === filter;
 };
@@ -42,16 +45,19 @@ export function SwipeView({ data, prefs, setPrefs, plan = [], seen, past, onSkip
         stores: prefs.stores, atHome: prefs.atHome, people: prefs.people, limit: Infinity
       }).map((s) => [s.recipe.id, s])
     );
+    // Dishes using what you have in Hjemme join the deck even without a tilbud;
+    // their price already leaves out what you have.
     const items = data.recipes
-      .filter((r) => !seen.includes(r.id) && passes(filter, r, saved))
-      .map((r) => {
+      .map((r) => ({ r, home: usesPantry(r, prefs.atHome, data.ingredients) }))
+      .filter(({ r, home }) => !seen.includes(r.id) && passes(filter, r, saved, home))
+      .map(({ r, home }) => {
         const price = portionPrice(data, r, prefs.stores, prefs.people, prefs.atHome);
         const r2 = reuse.get(r.id);
         const reuses = r2 && r2.perMeal <= REUSE_SHARE * price ? r2 : null;
-        return { recipe: r, heroes: heroOffers(data, r, prefs.stores), price: reuses ? reuses.perMeal : price, reuses };
+        return { recipe: r, heroes: heroOffers(data, r, prefs.stores), price: reuses ? reuses.perMeal : price, reuses, home };
       });
     if (filter === 'gemte') return items.sort((a, b) => a.price - b.price);
-    return rankDeck(data, items.filter((x) => x.heroes.length > 0 || x.reuses), { week: data.week, past });
+    return rankDeck(data, items.filter((x) => x.heroes.length > 0 || x.reuses || x.home.length > 0), { week: data.week, past });
   }, [data, plan, prefs.stores, prefs.people, prefs.atHome, filter, saved, seen, past]);
 
   const [fling, setFling] = useState(null);
@@ -101,7 +107,9 @@ export function SwipeView({ data, prefs, setPrefs, plan = [], seen, past, onSkip
             <p className="muted">
               {filter === 'gemte' && saved.length === 0
                 ? 'Tryk på hjertet i en ret for at gemme den her.'
-                : 'Skift butikker eller filtre for at se flere.'}
+                : filter === 'hjemme'
+                  ? 'Ingen retter bruger det, du har i Hjemme. Tilføj mere under Hjemme.'
+                  : 'Skift butikker eller filtre for at se flere.'}
             </p>
             {seen.length > 0 && (
               <button type="button" className="secondary" onClick={onReset}>Se de overspringte igen</button>
@@ -136,7 +144,12 @@ export function SwipeView({ data, prefs, setPrefs, plan = [], seen, past, onSkip
                       Bruger det, du har: {andList(item.reuses.shared.slice(0, 3).map((id) => data.ingredients[id].name))}
                     </span>
                   )}
-                  {item.heroes.length === 0 && !item.reuses && <span className="glass-chip">Ikke på tilbud denne uge</span>}
+                  {item.home.length > 0 && !item.reuses && (
+                    <span className="glass-chip glass-chip--reuse">
+                      Fra Hjemme: {andList(item.home.slice(0, 3).map((id) => data.ingredients[id].name))}
+                    </span>
+                  )}
+                  {item.heroes.length === 0 && !item.reuses && !item.home.length && <span className="glass-chip">Ikke på tilbud denne uge</span>}
                   {uniqueHeroes(item.heroes).slice(0, item.reuses ? 1 : 2).map(({ ingredientId, offer }) => (
                     <span className="glass-chip" key={ingredientId}>
                       {data.ingredients[ingredientId].name} {krSmall(offer.price)} · {storesById[offer.store]?.name}

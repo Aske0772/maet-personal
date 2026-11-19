@@ -28,3 +28,35 @@ Metode: få, høflige forespørgsler pr. site. Intet login, ingen cookie-accept,
 ## Juridiske forbehold
 
 Ingen af kæderne har webvilkår, der nævner scraping eller automatisk adgang. Det er ikke det samme som tilladelse: ophavsretslovens § 71 (database/katalog) og ophavsret til billeder og layout gælder stadig. Derfor: kun fakta, få forespørgsler (fx én gang dagligt), ingen omgåelse af spærringer. Få en IT/IP-advokat til at se modellen før lancering, og overvej at spørge kæderne direkte.
+
+---
+
+# Fuldt sortiment (hyldepriser) pr. kæde
+
+Undersøgt 19.11.2026 fra GitHub Actions (robots.txt, sitemaps og offentlige produktsider). Spørgsmålet: kan vi få **hele** sortimentet med hyldepriser, ikke kun avisens tilbud? Samme regler som ovenfor: robots.txt skal tillade det, intet login, ingen omgåelse og ingen nøgler hentet ud af sidernes kode.
+
+| Kæde | Fundet | Vurdering |
+|---|---|---|
+| **REMA 1000** | Webshop-API med hele sortimentet | ✅ Bruges allerede |
+| **Lidl** | Faste hverdagspriser på kategorisider (~40 varer) | ⚠️ Bruges allerede, ingen fuld webshop |
+| **Netto, Føtex, Bilka** | BilkaToGo har et produkt-sitemap med 43.731 varer, og robots.txt tillader produktsiderne. Siderne indeholder dog ingen pris i HTML'en: prisen hentes bagefter fra en søgetjeneste med en nøgle i sidens JavaScript. Netto har ingen produktsider. | ❌ Ikke uden at bruge en nøgle fra deres kode. **Lovlig vej:** Salling Groups officielle API (developer.sallinggroup.dev) med en gratis nøgle: *Product Suggestions* og *Anti Food Waste* (madspild-tilbud pr. butik). |
+| **MENY, SPAR, Min Købmand** | Butikkernes webshops (fx `parkvej.meny.dk`) har `Crawl-delay: 100` i robots.txt | ❌ 100 sek. pr. forespørgsel gør et fuldt katalog (15–20.000 varer) urealistisk |
+| **LET-KØB** | Siden svarede ikke | ❌ |
+| **Kvickly, SuperBrugsen, Brugsen, 365discount** | Kun kategori- og indholdssider. Pris-endpoint under `/umbraco/` er blokeret i robots.txt | ❌ Kun avisens tilbud via Tjek |
+
+**Konsekvens:** Uden for REMA og Lidl bruger appen fortsat avisens tilbud og REMA's hyldepris som "vejledende".
+
+# Opskriftssider
+
+| Side | robots.txt | Struktureret opskrift | Antal (sitemap) | Bruges |
+|---|---|---|---|---|
+| Valdemarsro | Tilladt (GPTBot blokeret) | Ja (`recipeIngredient` i siden) | ~3.000 indlæg, ca. 1 ud af 7 er en aftensret | ✅ |
+| Arla.dk | Opskriftssider tilladt, oversigter blokeret | Ja (`recipeIngredient` i siden) | 3.118 opskrifter | ✅ |
+| Madens Verden | Tilladt | Ja (JSON-LD Recipe) | ~4.960 indlæg | ✅ |
+| Mummum | Tilladt | Ja (JSON-LD Recipe) | ~3.650 indlæg | ✅ |
+| Spisbedre | Tilladt | Nej | 2.001 | ❌ |
+| DK-kogebogen | Tilladt | Nej (kun Organization) | – | ❌ |
+
+Billeder: kildernes billeder svarer 200 uden Referer og har lang cache (1 år hos Madens Verden). Mummums originaler er op til 1 MB, så vi bruger deres mindre srcset-version (870 px, webp).
+
+Kun fakta (ingredienser, mængder, tid, portioner) gemmes. Fremgangsmåden skrives om med egne ord, og billedet vises fra kildens server med link til originalen.

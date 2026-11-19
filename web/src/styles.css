@@ -510,7 +510,7 @@ ul, ol { margin: 0; padding: 0; }
 
 /* Tab bar */
 .tabbar {
-  display: grid; grid-template-columns: repeat(3, 1fr); border-top: 1px solid var(--line);
+  display: grid; grid-template-columns: repeat(4, 1fr); border-top: 1px solid var(--line);
   background: color-mix(in srgb, var(--bg) 92%, transparent); backdrop-filter: blur(12px);
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -533,3 +533,12 @@ ul, ol { margin: 0; padding: 0; }
 @media (prefers-reduced-motion: reduce) {
   .card, .sheet, .sheet-backdrop, .replace-backdrop, .replace-sheet, .week-day { transition: none; animation: none; }
 }
+
+/* Hjemme: the same boxes as the list; the amount sits in the − n + pill. */
+.home-intro { margin-top: -8px; }
+.home-amount { min-width: 64px; white-space: nowrap; }
+.home-unit { height: 26px; padding: 0 10px; font-size: 12px; }
+.home-idea {
+  display: flex; align-items: center; gap: 12px; width: 100%; text-align: left; color: inherit; font: inherit;
+}
+.home-idea::after { content: ''; position: absolute; inset: 0; border-radius: 18px; }
