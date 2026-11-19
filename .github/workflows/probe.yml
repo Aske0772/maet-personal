@@ -1,14 +1,28 @@
-# Source check (kildetjek). Runs only on the probe branch.
-name: Kildetjek
+# Data snapshot for local testing: this week's week.json + catalog.json pushed to
+# the "snapshot" branch. Runs only on the probe branch.
+name: Data-snapshot
 on:
   push:
     branches: [probe]
+permissions:
+  contents: write
 jobs:
-  probe:
+  snapshot:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 24
-      - run: node probe/probe.mjs
+      - run: npm ci --prefix server
+      - run: npm run export --prefix server -- ../snap
+      - name: Push to snapshot branch
+        run: |
+          cd snap
+          rm -rf images
+          git init -q -b snapshot
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add week.json catalog.json
+          git commit -qm "Data-snapshot $(date -u +%F)"
+          git push -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" snapshot

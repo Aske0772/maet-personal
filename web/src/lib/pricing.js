@@ -13,6 +13,14 @@ const EPS = 1e-9;
 const packsFor = (need, packSize) => Math.max(1, Math.ceil(need / packSize - EPS));
 export const isExact = (source) => ['tilbud', 'fast', 'hylde'].includes(source?.kind);
 
+// What you have at home, per ingredient, in its own unit. `atHome` is either the
+// Hjemme map ({ id: amount }, Infinity = "har nok") or a plain list of ids (har nok).
+export function homeMap(atHome = []) {
+  if (Array.isArray(atHome)) return Object.fromEntries(atHome.map((id) => [id, Infinity]));
+  return atHome ?? {};
+}
+const haveOf = (home, id) => home[id] ?? 0;
+
 // Real prices for an ingredient in the chosen stores.
 export function offersFor(data, ingredientId, stores) {
   return (data.offers[ingredientId] ?? []).filter((o) => stores.includes(o.store));
@@ -68,15 +76,18 @@ export function isOnOffer(data, recipe, stores) {
 
 // Price one dish for a number of people and days.
 // staples: ids of basisvarer the user needs to buy for this dish.
-// atHome: ids the user already has – never priced.
+// atHome: what the user already has (see homeMap) – only the rest is bought.
 export function priceDish(data, recipe, { people, days, staples = [], atHome = [], stores }) {
+  const home = homeMap(atHome);
   const factor = (people * days) / recipe.serves;
   const lines = recipe.ingredients.map(({ id, qty }) => {
     const ing = data.ingredients[id];
     const need = qty * factor;
-    const included = ing.staple ? staples.includes(id) : !atHome.includes(id);
-    const source = included ? cheapest(data, id, need, stores) : null;
-    return { id, ing, need, staple: ing.staple, included, source };
+    const fromHome = Math.min(need, haveOf(home, id));
+    const buy = need - fromHome;
+    const included = (ing.staple ? staples.includes(id) : true) && buy > EPS;
+    const source = included ? cheapest(data, id, buy, stores) : null;
+    return { id, ing, need, fromHome, staple: ing.staple, included, source };
   });
   const total = lines.reduce((sum, l) => sum + (l.source?.cost ?? 0), 0);
   const approx = lines.reduce((sum, l) => sum + (l.source && !isExact(l.source) ? l.source.cost : 0), 0);
@@ -106,6 +117,7 @@ export function portionPrice(data, recipe, stores, people = 2, atHome = []) {
 // adjust: packs bought beyond (or below) what the dishes need, per ingredient,
 // from + and − on the list. Never below one pack; dish prices ignore it.
 export function shoppingList(data, plan, { stores, atHome = [], extras = [], adjust = {} }) {
+  const home = homeMap(atHome);
   const recipes = Object.fromEntries(data.recipes.map((r) => [r.id, r]));
   const needs = new Map();
   let meals = 0;
@@ -126,13 +138,15 @@ export function shoppingList(data, plan, { stores, atHome = [], extras = [], adj
   }
 
   const items = [];
-  const home = [];
+  const fromHome = [];
   for (const entry of needs.values()) {
-    if (atHome.includes(entry.id) && !entry.ing.staple) {
-      home.push(entry);
+    // What you have covers the dishes in plan order; only the rest is bought.
+    const have = Math.min(entry.need, haveOf(home, entry.id));
+    if (entry.need - have <= EPS) {
+      fromHome.push({ ...entry, fromHome: have });
       continue;
     }
-    items.push({ ...entry, source: cheapest(data, entry.id, entry.need, stores) });
+    items.push({ ...entry, fromHome: have, source: cheapest(data, entry.id, entry.need - have, stores) });
   }
 
   const shares = {};
@@ -192,7 +206,7 @@ export function shoppingList(data, plan, { stores, atHome = [], extras = [], adj
 
   const total = dishTotal + extrasTotal;
   return {
-    total, dishTotal, extrasTotal, approx, meals, perMeal: meals ? dishTotal / meals : 0, groups: sorted, home, shares,
+    total, dishTotal, extrasTotal, approx, meals, perMeal: meals ? dishTotal / meals : 0, groups: sorted, home: fromHome, shares,
     // Needs per ingredient and what was bought for them, for suggestions.
     needs: Object.fromEntries(items.map((i) => [i.id, { need: i.need, bought: i.source.packs * i.source.packSize }]))
   };
@@ -213,6 +227,7 @@ export function addedCost(data, plan, newItem, opts) {
 export function suggestions(data, plan, { stores, atHome = [], people = 2, filter = () => true, minShared = 2, limit = 3 }) {
   if (plan.length === 0) return [];
   const opts = { stores, atHome };
+  const home = homeMap(atHome);
   const base = shoppingList(data, plan, opts);
   const planned = new Set(plan.map((p) => p.recipeId));
   const out = [];
@@ -220,7 +235,7 @@ export function suggestions(data, plan, { stores, atHome = [], people = 2, filte
     if (planned.has(recipe.id) || !filter(recipe)) continue;
     const shared = recipe.ingredients
       .map(({ id }) => id)
-      .filter((id) => !data.ingredients[id].staple && (base.needs[id] || atHome.includes(id)));
+      .filter((id) => !data.ingredients[id].staple && (base.needs[id] || haveOf(home, id) > 0));
     if (shared.length < minShared) continue;
     const after = shoppingList(data, [...plan, { id: '__new', recipeId: recipe.id, people, days: 1, staples: [] }], opts);
     const cost = Math.max(0, after.dishTotal - base.dishTotal);

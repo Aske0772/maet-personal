@@ -184,3 +184,36 @@ describe('+ and − on the list', () => {
     expect(ids.at(-1)).toBe('x-kaffe');
   });
 });
+
+describe('Hjemme (amounts at home)', () => {
+  const stores = ['netto', 'rema', 'lidl'];
+  it('buys only what Hjemme does not cover', () => {
+    // 600 g chicken needed, 400 g at home → buy 200 g: one 400 g Netto pack (25 kr).
+    const p = priceDish(data, data.recipes[0], { people: 4, days: 1, stores, atHome: { kylling: 400 } });
+    const line = p.lines.find((l) => l.id === 'kylling');
+    expect(line.fromHome).toBe(400);
+    expect(line.source).toMatchObject({ packs: 1, cost: 25 });
+  });
+  it('leaves an ingredient out when Hjemme has enough', () => {
+    const p = priceDish(data, data.recipes[0], { people: 4, days: 1, stores, atHome: { ris: 1000 } });
+    expect(p.lines.find((l) => l.id === 'ris').source).toBeNull();
+  });
+  it('still accepts the old list of ids as "har nok"', () => {
+    const p = priceDish(data, data.recipes[0], { people: 4, days: 1, stores, atHome: ['ris'] });
+    expect(p.lines.find((l) => l.id === 'ris').source).toBeNull();
+  });
+  it('shares what you have across the week instead of counting it twice', () => {
+    // Karry 600 g + Wok 400 g = 1000 g; 500 g at home → buy 500 g.
+    const plan = [
+      { id: 'a', recipeId: 'karry', people: 4, days: 1, staples: [] },
+      { id: 'b', recipeId: 'wok', people: 4, days: 1, staples: [] }
+    ];
+    const list = shoppingList(data, plan, { stores, atHome: { kylling: 500 } });
+    const line = list.groups.flatMap((g) => g.items).find((i) => i.id === 'kylling');
+    expect(line.fromHome).toBe(500);
+    expect(line.need - line.fromHome).toBe(500);
+    // Fully covered goes to "Har hjemme".
+    const covered = shoppingList(data, plan, { stores, atHome: { kylling: 2000 } });
+    expect(covered.home.map((i) => i.id)).toContain('kylling');
+  });
+});

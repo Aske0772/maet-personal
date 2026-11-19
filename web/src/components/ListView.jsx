@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Check, Share, Undo } from './icons.jsx';
 import { Qty } from './Qty.jsx';
 import { isExact } from '../lib/pricing.js';
-import { kr, packSize, productSize, capitalize, sourceParts, updatedLabel } from '../lib/format.js';
+import { kr, packSize, productSize, capitalize, sourceParts, updatedLabel, qty } from '../lib/format.js';
 import { AddItem } from './AddItem.jsx';
 
 export function ListView({ data, list, checked, stores, countOf, onCheck, onStep, onStepProduct, onBackHome }) {
@@ -111,7 +111,7 @@ export function ListView({ data, list, checked, stores, countOf, onCheck, onStep
                     </button>
                     <span className="shop-text">
                       <span className="shop-name">{nameOf(i)}</span>
-                      <span className="shop-product">{[pack(i), totalOf(i)].filter(Boolean).join(' · ')}</span>
+                      <span className="shop-product">{[pack(i), totalOf(i), i.fromHome > 0 ? `${qty(i.fromHome, i.ing)} fra Hjemme` : ''].filter(Boolean).join(' · ')}</span>
                       <span className={`shop-kind ${i.source.kind}`}>{store ? note : [where, note].filter(Boolean).join(' · ')}</span>
                     </span>
                     <span className="shop-side">
@@ -132,7 +132,7 @@ export function ListView({ data, list, checked, stores, countOf, onCheck, onStep
       {list.home.length > 0 && (
         <section className="shop-group" aria-label="Har hjemme">
           <h2 className="shop-group-title"><span>Har hjemme</span></h2>
-          <p className="shop-group-hint">Tryk for at købe det alligevel.</p>
+          <p className="shop-group-hint">Dækket af det, du har i Hjemme. Tryk for at købe det alligevel.</p>
           <ul className="shop-home-list">
             {list.home.map((i) => (
               <li key={i.id}>

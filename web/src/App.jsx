@@ -9,11 +9,14 @@ import { SwipeView } from './components/SwipeView.jsx';
 import { DishDetail } from './components/DishDetail.jsx';
 import { WeekView } from './components/WeekView.jsx';
 import { ListView } from './components/ListView.jsx';
+import { HomeView } from './components/HomeView.jsx';
+import { migrateAtHome, pantryAmounts } from './lib/pantry.js';
 import { StorePicker } from './components/StorePicker.jsx';
 import { Sheet, Stepper } from './components/ui.jsx';
-import { Cards, Calendar, List } from './components/icons.jsx';
+import { Cards, Calendar, List, Home } from './components/icons.jsx';
 
-const PREFS = { onboarded: false, stores: [], people: 2, diet: 'alle', atHome: [], saved: [] };
+// pantry: Hjemme, { [ingredientId]: { amount, unit } } – amount null means "har nok".
+const PREFS = { onboarded: false, stores: [], people: 2, diet: 'alle', atHome: [], pantry: {}, saved: [] };
 // Weekly state is tagged with the ISO week and starts fresh when the avis changes.
 // extras: products added by hand in "Tilføj vare" ({ id, store, title, price, amount, unit, kind, until, qty }).
 // plan items: { id, recipeId, days, people, staples, day? } – day 0 = Monday, see lib/week.js.
@@ -26,7 +29,18 @@ export default function App() {
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
   const [waiting, setWaiting] = useState(false);
-  const [prefs, setPrefs] = usePersistent('mad.prefs', PREFS);
+  const [storedPrefs, setPrefs] = usePersistent('mad.prefs', PREFS);
+  // The old "har hjemme" list lives on as "har nok" entries in Hjemme.
+  useEffect(() => {
+    if (storedPrefs.atHome?.length) setPrefs(migrateAtHome);
+  }, [storedPrefs.atHome, setPrefs]);
+  // Every price in the app reads atHome: what Hjemme holds, in each ingredient's unit.
+  const home = useMemo(
+    () => (data ? pantryAmounts(storedPrefs.pantry, data.ingredients) : {}),
+    [data, storedPrefs.pantry]
+  );
+  const prefs = useMemo(() => ({ ...storedPrefs, atHome: home }), [storedPrefs, home]);
+  const setPantry = (fn) => setPrefs((p) => ({ ...p, pantry: fn(p.pantry ?? {}) }));
   const [state, setState] = usePersistent('mad.week', WEEK);
   const [past, setPast] = usePersistent('mad.history', PAST);
   const [tab, setTab] = useState('swipe');
@@ -144,7 +158,7 @@ export default function App() {
   // + and − on the list. A dish's ingredient never goes below one pack: the last −
   // means "har det hjemme". Basisvarer stop at one.
   const atHome = (id) => {
-    setPrefs((p) => ({ ...p, atHome: [...p.atHome, id] }));
+    setPantry((pantry) => ({ ...pantry, [id]: pantry[id] ?? { amount: null, unit: null } }));
     setState((s) => ({ ...s, adjust: { ...s.adjust, [id]: 0 } }));
   };
   const step = (item, d) => {
@@ -219,7 +233,13 @@ export default function App() {
             data={data} list={list} checked={state.checked} stores={prefs.stores}
             countOf={countOf} onStep={step} onStepProduct={stepProduct}
             onCheck={(id) => setState((s) => ({ ...s, checked: toggleIn(s.checked, id) }))}
-            onBackHome={(id) => setPrefs((p) => ({ ...p, atHome: p.atHome.filter((x) => x !== id) }))}
+            onBackHome={(id) => setPantry((pantry) => { const next = { ...pantry }; delete next[id]; return next; })}
+          />
+        )}
+        {tab === 'home' && (
+          <HomeView
+            data={data} prefs={prefs} pantry={storedPrefs.pantry ?? {}} onChange={setPantry}
+            onOpen={(recipe) => setSheet({ recipe, mode: 'add' })}
           />
         )}
       </main>
@@ -227,6 +247,7 @@ export default function App() {
       <nav className="tabbar" aria-label="Hovedmenu">
         <TabButton id="swipe" tab={tab} setTab={setTab} icon={<Cards />} label="Swipe" />
         <TabButton id="week" tab={tab} setTab={setTab} icon={<Calendar />} label="Uge" badge={days || null} />
+        <TabButton id="home" tab={tab} setTab={setTab} icon={<Home />} label="Hjemme" badge={Object.keys(storedPrefs.pantry ?? {}).length || null} />
         <TabButton id="list" tab={tab} setTab={setTab} icon={<List />} label="Indkøb" />
       </nav>
 

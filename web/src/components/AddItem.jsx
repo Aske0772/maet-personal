@@ -3,6 +3,7 @@ import { fetchCatalog } from '../lib/api.js';
 import { krPrice, productSize, unitPrice, sourceParts } from '../lib/format.js';
 import { Plus } from './icons.jsx';
 import { Qty } from './Qty.jsx';
+import { norm, wordsOf, nameScore } from '../lib/search.js';
 
 // Shown before the catalog has loaded; the catalog sends the same list.
 const FALLBACK_CATS = {
@@ -10,19 +11,6 @@ const FALLBACK_CATS = {
   kolonial: 'Kolonial', frost: 'Frost', drikke: 'Drikke', snacks: 'Snacks & søde sager'
 };
 const LIMIT = 30;
-const norm = (s) => s.toLocaleLowerCase('da-DK');
-const wordsOf = (s) => norm(s).split(/[^a-zæøåäöü0-9]+/).filter(Boolean);
-
-// How well a product name answers one search word, best first:
-// 0 a whole word or the end of one ("letmælk" for mælk), or the end of the search
-//   word itself ("druer" for vindruer); 1 the start of a word ("mælkesnitte");
-// 2 anywhere in the name. null: no match.
-function wordScore(title, titleWords, w) {
-  if (titleWords.some((t) => t === w || (t.endsWith(w) && w.length >= 3) || (t.length >= 4 && w.endsWith(t)))) return 0;
-  if (titleWords.some((t) => t.startsWith(w))) return 1;
-  return title.includes(w) ? 2 : null;
-}
-
 // "Tilføj vare": search every food item in your stores this week and put it on
 // the list yourself, for what no recipe covers (coffee, oats, a snack). The aisle
 // chips narrow the search, or show an aisle on their own.
@@ -48,14 +36,7 @@ export function AddItem({ stores, storesById, ingredients, countOf, onStep }) {
     const found = [];
     for (const i of items) {
       if (!stores.includes(i.store) || (cat && i.cat !== cat)) continue;
-      const title = norm(i.title);
-      const tw = wordsOf(i.title);
-      let score = 0;
-      for (const w of words) {
-        const s = wordScore(title, tw, w);
-        if (s == null) { score = null; break; }
-        score += s;
-      }
+      const score = nameScore(i.title, words);
       if (score == null) continue;
       // The real thing first: Letmælk is the ingredient mælk, Mælkesnitte is not.
       const ing = i.ing ? norm(ingredients[i.ing]?.name ?? '') : '';
