@@ -1,0 +1,32 @@
+# Recipe import: reads dinner recipes (facts only) from the sites in
+# docs/kilder-pr-kaede.md into server/data/recipes-raw.json and commits it.
+# Started by hand (gh workflow run import-recipes.yml).
+name: Importér opskrifter
+on:
+  workflow_dispatch:
+    inputs:
+      per_site:
+        description: Opskrifter pr. side
+        default: '150'
+permissions:
+  contents: write
+jobs:
+  import:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+      - run: npm ci --prefix server && npm i --no-save --prefix server sharp
+      - name: Import
+        working-directory: server
+        run: node scripts/import-recipes.mjs ${{ inputs.per_site }} > data/recipes-raw.json
+      - name: Commit
+        run: |
+          git config user.name "github-actions"
+          git config user.email "github-actions@users.noreply.github.com"
+          git add server/data/recipes-raw.json
+          git commit -m "Opskrifter importeret (kun fakta) [skip ci]" || exit 0
+          git pull --rebase -q && git push

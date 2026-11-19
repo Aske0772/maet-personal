@@ -1,0 +1,202 @@
+// Recipe import (run in GitHub Actions: .github/workflows/import-recipes.yml).
+//
+// Reads dinner recipes from Danish food sites that publish them as structured data
+// (schema.org Recipe, as JSON-LD or microdata) and that robots.txt lets us read; see
+// docs/kilder-pr-kaede.md. Only FACTS are kept: title, time, servings, ingredient
+// lines, the image URL and the source URL. The method text is not stored: from it
+// we keep only the numbers that decide the result (oven temperatures and times per
+// step), and the steps are written anew in our own words (server/data/recipes.json).
+//
+//   node scripts/import-recipes.mjs [perSite=150] > data/recipes-raw.json
+
+import sharp from 'sharp';
+
+const PER_SITE = Number(process.argv[2] ?? 150);
+const UA = 'Maet/0.1 (+https://github.com/Aske0772/maet-personal; opskriftsimport, personlig brug)';
+const GAP_MS = 1000;
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+const last = new Map();
+
+async function get(url, accept = 'text/html') {
+  const host = new URL(url).host;
+  const wait = (last.get(host) ?? 0) + GAP_MS - Date.now();
+  if (wait > 0) await sleep(wait);
+  last.set(host, Date.now());
+  const res = await fetch(url, { headers: { 'User-Agent': UA, Accept: accept }, signal: AbortSignal.timeout(20000) });
+  if (!res.ok) throw new Error(`${url}: HTTP ${res.status}`);
+  return res;
+}
+const locs = (xml) => [...xml.matchAll(/<loc>\s*([^<\s]+)\s*<\/loc>/g)].map((m) => m[1].replace(/&amp;/g, '&'));
+
+// Dinner-looking URLs, and what is clearly not a dinner.
+const DISH = /kylling|okse|svin|gris|kalv|lam|laks|torsk|fisk|rejer|tun|pasta|spaghetti|lasagne|frikadel|gryde|suppe|karry|curry|tacos|burrito|bolognese|risotto|wok|ovn|kartof|burger|pizza|chili|dahl|linse|kikært|boller-i|tærte|quiche|frittata|omelet|mørbrad|kotelet|medister|flæsk|bøf|boef|hakket|kød|koed|nudler|ris-|wrap|pita|fad|stroganoff|gullasch|biksemad|pølse|poelse|bacon|skinke|kalkun|and-|panden|sandwich|toast|stuvning|grøntsag|groentsag|vegetar|vegan|bønne|boenne|tofu|halloumi|feta|gratin|carbonara|pesto|ramen|teriyaki|tikka|tandoori|kebab/i;
+const NOT = /kage|dessert|is-|cookie|muffin|brød|broed|bolle(?!r-i)|smoothie|drink|cocktail|dressing|marinade|dip|sylte|syltet|marmelade|chutney|snack|tilbehoer|tilbehør|boganbefaling|anmeldelse|konkurrence|vin-|julegave|gaveide|rundstykke|scones|vafler|pandekage|grød|groed|morgenmad|brunch|krydderiblanding|bagning|smørrebrød|smoerrebroed|kiks|knækbrød|is$|sorbet|trifle|tiramisu|cheesecake|granola/i;
+
+const SITES = [
+  { id: 'arla', name: 'Arla', sitemaps: ['https://www.arla.dk/sitemap.xml?type=Modules.Recipes.Business.SitemapUrlWriter.RecipeSitemapUrlWriter'] },
+  { id: 'valdemarsro', name: 'Valdemarsro', sitemaps: [1, 2, 3].map((i) => `https://www.valdemarsro.dk/post-sitemap${i === 1 ? '' : i}.xml`) },
+  { id: 'madensverden', name: 'Madens Verden', sitemaps: [1, 2, 3, 4, 5].map((i) => `https://madensverden.dk/post-sitemap${i === 1 ? '' : i}.xml`) },
+  { id: 'mummum', name: 'Mummum', sitemaps: [1, 2, 3, 4].map((i) => `https://mummum.dk/post-sitemap${i === 1 ? '' : i}.xml`) }
+];
+
+const decode = (s) => s
+  .replace(/&#x([0-9a-f]+);/gi, (_, h) => String.fromCodePoint(parseInt(h, 16)))
+  .replace(/&#(\d+);/g, (_, d) => String.fromCodePoint(Number(d)))
+  .replace(/&nbsp;/g, ' ').replace(/&amp;/g, '&').replace(/&quot;/g, '"').replace(/&#039;|&apos;/g, "'")
+  .replace(/&lt;/g, '<').replace(/&gt;/g, '>');
+const text = (html) => decode(html.replace(/<br\s*\/?>/gi, ' ').replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
+
+// schema.org Recipe from JSON-LD (Arla writes the + of ld+json as &#x2B;).
+function jsonLdRecipe(html) {
+  for (const m of html.matchAll(/<script[^>]*application\/ld(?:\+|&#x2B;)json[^>]*>([\s\S]*?)<\/script>/gi)) {
+    let data;
+    try { data = JSON.parse(m[1]); } catch { continue; }
+    const stack = [data];
+    while (stack.length) {
+      const n = stack.pop();
+      if (!n || typeof n !== 'object') continue;
+      if (Array.isArray(n)) { stack.push(...n); continue; }
+      const type = [].concat(n['@type'] ?? n.type ?? []);
+      if (type.includes('Recipe')) return n;
+      if (n['@graph']) stack.push(n['@graph']);
+    }
+  }
+  return null;
+}
+
+function instructionsOf(r) {
+  const out = [];
+  const walk = (x) => {
+    if (!x) return;
+    if (typeof x === 'string') return out.push(text(x));
+    if (Array.isArray(x)) return x.forEach(walk);
+    if (x.itemListElement) return walk(x.itemListElement);
+    if (x.text) return out.push(text(x.text));
+  };
+  walk(r.recipeInstructions);
+  return out.filter(Boolean);
+}
+
+// Valdemarsro: microdata (itemprop="recipeIngredient" etc.).
+function microdataRecipe(html) {
+  const ing = [...html.matchAll(/<li[^>]*itemprop="recipeIngredient"[^>]*>([\s\S]*?)<\/li>/gi)].map((m) => text(m[1]));
+  if (!ing.length) return null;
+  const prop = (name) => html.match(new RegExp(`itemprop="${name}"[^>]*>([^<]*)<`, 'i'))?.[1];
+  const instr = html.match(/itemprop="recipeInstructions"[^>]*>([\s\S]*?)<\/div>/i)?.[1] ?? '';
+  return {
+    name: text(html.match(/<h2[^>]*itemprop="name"[^>]*>([\s\S]*?)<\/h2>/i)?.[1] ?? ''),
+    totalTime: prop('totalTime'),
+    recipeYield: prop('recipeYield'),
+    recipeIngredient: ing,
+    steps: [...instr.matchAll(/<p[^>]*>([\s\S]*?)<\/p>/gi)].map((m) => text(m[1])).filter(Boolean)
+  };
+}
+
+const minutesOf = (iso) => {
+  const m = String(iso ?? '').match(/P(?:T)?(?:(\d+)H)?(?:(\d+)M)?/i);
+  return m ? Number(m[1] ?? 0) * 60 + Number(m[2] ?? 0) : null;
+};
+const servingsOf = (y) => {
+  const m = String([].concat(y ?? [])[0] ?? '').match(/\d+/);
+  return m ? Number(m[0]) : null;
+};
+
+// The facts that decide the result, per step: what is done (from a fixed list of
+// kitchen verbs), oven temperature and minutes. Never the source's sentences.
+const VERBS = ['steg', 'brun', 'svits', 'kog', 'simr', 'bag', 'grill', 'damp', 'blancher', 'hak', 'skær', 'riv',
+  'pres', 'bland', 'rør', 'vend', 'pisk', 'marinér', 'mariner', 'smag', 'server', 'drys', 'fordel', 'læg', 'hæld',
+  'mos', 'blend', 'purér', 'rist', 'lun', 'varm', 'afkøl', 'hvil', 'fyld', 'rul', 'form', 'pensl', 'kom'];
+function stepFacts(steps) {
+  return steps.map((s) => ({
+    verbs: VERBS.filter((v) => new RegExp(`(?<![a-zæøå])${v}`, 'i').test(s)),
+    temp: [...s.matchAll(/(\d{3})\s*(?:°|grader|gr\.)/gi)].map((m) => Number(m[1])),
+    minutes: [...s.matchAll(/(\d+(?:[-–]\d+)?)\s*(?:min|minutter)/gi)].map((m) => m[1]),
+    hours: [...s.matchAll(/(\d+(?:[,.]\d+)?)\s*(?:time|timer)\b/gi)].map((m) => m[1])
+  }));
+}
+
+// A portrait image the swipe card can show at once: small, and from the source.
+function imageOf(site, html, r) {
+  const og = decode(html.match(/<meta property="og:image" content="([^"]+)"/)?.[1] ?? '');
+  const ld = [].concat(r?.image ?? []).map((x) => (typeof x === 'string' ? x : x?.url)).find(Boolean);
+  const src = og || ld;
+  if (!src) return null;
+  if (site === 'arla') {
+    const base = src.split('?')[0];
+    return { url: `${base}?width=720&height=1000&mode=crop&format=webp`, thumb: `${base}?width=48&height=64&mode=crop&format=jpg` };
+  }
+  // WordPress: the smallest srcset version at least 800 px wide of the same picture.
+  const stem = src.replace(/(-\d+x\d+)?\.(jpe?g|png|webp)$/i, '');
+  const sizes = [...html.matchAll(/srcset="([^"]+)"/g)]
+    .flatMap((m) => m[1].split(',').map((p) => p.trim().split(/\s+/)))
+    .filter(([u, w]) => u?.startsWith(stem) && /^\d+w$/.test(w ?? ''))
+    .map(([u, w]) => ({ u, w: parseInt(w, 10) }))
+    .sort((a, b) => a.w - b.w);
+  const pick = sizes.find((s) => s.w >= 800) ?? null;
+  return { url: pick?.u ?? src, thumb: sizes.find((s) => s.w >= 150)?.u ?? pick?.u ?? src };
+}
+
+// The image's main colour, for the card's background before the photo shows.
+async function colorOf(url) {
+  try {
+    const buf = Buffer.from(await (await get(url, 'image/*')).arrayBuffer());
+    const { dominant } = await sharp(buf).stats();
+    return `#${[dominant.r, dominant.g, dominant.b].map((v) => v.toString(16).padStart(2, '0')).join('')}`;
+  } catch {
+    return null;
+  }
+}
+
+async function readRecipe(site, url) {
+  const html = await (await get(url)).text();
+  const ld = jsonLdRecipe(html);
+  const md = ld ? null : microdataRecipe(html);
+  const r = ld ?? md;
+  if (!r?.recipeIngredient?.length) return null;
+  const steps = ld ? instructionsOf(ld) : md.steps;
+  const image = imageOf(site.id, html, ld);
+  return {
+    id: `${site.id}-${new URL(url).pathname.split('/').filter(Boolean).pop()}`,
+    site: site.id, siteName: site.name, url,
+    title: text(r.name ?? ''),
+    category: [].concat(ld?.recipeCategory ?? []).join(', '),
+    minutes: minutesOf(r.totalTime) || (minutesOf(r.prepTime) + minutesOf(r.cookTime)) || null,
+    serves: servingsOf(r.recipeYield),
+    ingredients: r.recipeIngredient.map((s) => text(String(s))),
+    stepCount: steps.length,
+    stepFacts: stepFacts(steps),
+    image: image?.url ?? null,
+    color: image ? await colorOf(image.thumb) : null
+  };
+}
+
+const out = [];
+for (const site of SITES) {
+  const urls = [];
+  for (const sm of site.sitemaps) {
+    try {
+      urls.push(...locs(await (await get(sm, 'application/xml')).text()));
+    } catch (e) {
+      console.error(`  ${site.name}: ${e.message}`);
+    }
+  }
+  const candidates = urls.filter((u) => DISH.test(u) && !NOT.test(u));
+  // Spread over the whole archive, not only the newest posts.
+  const step = Math.max(1, Math.floor(candidates.length / PER_SITE));
+  const picked = candidates.filter((_, i) => i % step === 0).slice(0, PER_SITE);
+  console.error(`${site.name}: ${urls.length} URL'er, ${candidates.length} aftensmad-agtige, læser ${picked.length}`);
+  let n = 0;
+  for (const url of picked) {
+    try {
+      const r = await readRecipe(site, url);
+      if (r && !(site.id === 'arla' && r.category && !/aftensmad|hovedret/i.test(r.category))) {
+        out.push(r);
+        n++;
+      }
+    } catch (e) {
+      console.error(`  ${e.message}`);
+    }
+  }
+  console.error(`  ${n} opskrifter`);
+}
+process.stdout.write(JSON.stringify({ importedAt: new Date().toISOString(), recipes: out }, null, 1));
