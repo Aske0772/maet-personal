@@ -35,7 +35,7 @@ npm run dev
 | `npm run build && npm start` | Produktionsbuild serveret af API'et på port 8787 |
 | `npm run export --prefix server -- <mappe>` | Hent ugens priser og skriv `week.json` + billeder til en mappe (statisk version) |
 
-Miljøvariabler: `API_PORT` (8787), `DB_FILE`, `CONTACT_EMAIL` (kontakt i User-Agent, se [docs/datahentning.md](docs/datahentning.md)), `DISABLED_SOURCES` (nødbremse: `tjek`, `rema`, `lidl`), `REFRESH_HOURS` (standard 24). Til webbuildet: `BASE_PATH` (sti appen ligger under) og `VITE_WEEK_URL` (hent ugen fra en statisk fil i stedet for `/api/week`).
+Miljøvariabler: `API_PORT` (8787), `DB_FILE`, `CONTACT_EMAIL` (kontakt i User-Agent), `DISABLED_SOURCES` (nødbremse: `tjek`, `rema`, `lidl`), `REFRESH_HOURS` (standard 24). Til webbuildet: `BASE_PATH` (sti appen ligger under) og `VITE_WEEK_URL` (hent ugen fra en statisk fil i stedet for `/api/week`).
 
 **GitHub Pages:** `.github/workflows/pages.yml` bygger en statisk version uden server: appen bygges med `BASE_PATH=/idebanken-mad-app/`, og ugens priser hentes i workflowet og lægges ved som `week.json`. Den kører ved hvert push til main og én gang i døgnet. Kræver, at Pages-kilden i repoets indstillinger står til "GitHub Actions".
 
@@ -81,7 +81,7 @@ Kun `tilbud` afgør, hvilke retter der kommer i bunken. Vejledende/anslåede bel
 
 ## Datakilde – vigtigt
 
-Tilbuddene hentes fra Tjek's (eTilbudsavis') offentlige API uden nøgle, og hyldepriser fra REMA 1000's offentlige webshop-API og Lidls produktsider på lidl.dk. Det er fint til en prototype, men **ikke** til en app i drift: få en licens (Tjek sælger API-adgang) eller aftaler med kæderne, før appen udgives – eller brug PDF-avis-versionen. Kilden er isoleret i `server/src/sources/`, så den kan skiftes ud. Se [docs/kilder-pr-kaede.md](docs/kilder-pr-kaede.md) for hver kædes egne kilder, og [docs/datahentning.md](docs/datahentning.md) for reglerne vi henter efter (ærlig User-Agent, højst én hentning i døgnet, kun fakta, automatisk pause ved blokering, nødbremsen `DISABLED_SOURCES` og hvad vi gør ved et påkrav).
+Tilbuddene hentes fra Tjek's (eTilbudsavis') offentlige API uden nøgle, og hyldepriser fra REMA 1000's offentlige webshop-API og Lidls produktsider på lidl.dk. Det er fint til en prototype, men **ikke** til en app i drift: få en licens (Tjek sælger API-adgang) eller aftaler med kæderne, før appen udgives – eller brug PDF-avis-versionen. Kilden er isoleret i `server/src/sources/`, så den kan skiftes ud. Se [docs/kilder-pr-kaede.md](docs/kilder-pr-kaede.md) for hver kædes egne kilder.
 
 ## Mambeno-analysen
 
