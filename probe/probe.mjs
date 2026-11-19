@@ -50,80 +50,40 @@ async function recipeCheck(label, url) {
   }
 }
 
-console.log('==== SITEMAPS ====');
-for (const s of [
-  'https://www.valdemarsro.dk/sitemap_index.xml',
-  'https://www.arla.dk/sitemap.index.xml',
-  'https://madensverden.dk/sitemap_index.xml',
-  'https://mummum.dk/sitemap_index.xml',
-  'https://spisbedre.dk/sitemap.xml',
-  'https://www.dk-kogebogen.dk/sitemap/sitemap.xml'
-]) await sitemapTree(s);
 
-// A few recipe-looking URLs from each site's first recipe sitemap.
-async function sample(sitemap, filter) {
+// Round 3: recipe pages only. A few URLs per site from its recipe sitemap.
+async function sample(sitemap, filter, n = 3) {
   const r = await get(sitemap);
   const l = locs(r.text).filter(filter);
-  console.log(`\n${sitemap}: ${l.length} matching, e.g.`, l.slice(0, 3).join(' '));
+  console.log(`\n${sitemap}: ${locs(r.text).length} locs, ${l.length} matching`);
   return l;
 }
-const v = await sample('https://www.valdemarsro.dk/post-sitemap.xml', (u) => !/\/(tag|category)\//.test(u));
-if (v[5]) await recipeCheck('valdemarsro', v[5]);
-const a = await sample('https://www.arla.dk/sitemap.recipes.xml', (u) => /\/opskrifter\//.test(u));
-if (a[5]) await recipeCheck('arla', a[5]);
-const sb = await sample('https://spisbedre.dk/sitemap.xml', (u) => /\/opskrifter\//.test(u));
-if (sb[5]) await recipeCheck('spisbedre', sb[5]);
-const dk = await sample('https://www.dk-kogebogen.dk/sitemap/sitemap.xml', (u) => /opskrifter/.test(u));
-if (dk[5]) await recipeCheck('dk-kogebogen', dk[5]);
+const pick = (l, idx) => idx.map((i) => l[i]).filter(Boolean);
+const dish = /kylling|okse|svin|laks|torsk|pasta|lasagne|frikadel|gryde|suppe|karry|curry|tacos|bolognese|risotto|wok|ovn|fisk|kartof|burger|pizza|chili|dahl|linse/;
 
-// --- Shops ---------------------------------------------------------------------
-console.log('\n==== SHOPS ====');
-// Salling / BilkaToGo: product sitemap, one product page's structured data.
-const btgProducts = await sample('https://www.bilkatogo.dk/sitemap-products.xml', () => true);
-if (btgProducts[10]) {
-  const r = await get(btgProducts[10]);
-  head('bilkatogo product', r);
-  const { blocks, types } = ldTypes(r.text);
-  console.log('  ld+json types:', types.join(' '));
-  const prod = blocks.find((b) => /"Product"/.test(b));
-  if (prod) console.log('  product:', prod.replace(/\s+/g, ' ').slice(0, 500));
-}
-// Netto product pages?
-const nettoMap = await get('https://netto.dk/sitemap.xml');
-head('netto sitemap', nettoMap);
-console.log('  ', locs(nettoMap.text).slice(0, 15).join('\n   '));
-const nettoProductMap = locs(nettoMap.text).find((u) => /produkt|product/i.test(u));
-if (nettoProductMap) {
-  const l = locs((await get(nettoProductMap)).text);
-  console.log('  netto product sitemap:', nettoProductMap, l.length, 'e.g.', l.slice(0, 2).join(' '));
-  if (l[10]) {
-    const r = await get(l[10]);
-    head('netto product', r);
-    const prod = ldTypes(r.text).blocks.find((b) => /"Product"/.test(b));
-    console.log('  product:', prod?.replace(/\s+/g, ' ').slice(0, 500));
-  }
-}
+const vr = await sample('https://www.valdemarsro.dk/post-sitemap2.xml', (u) => dish.test(u));
+for (const u of pick(vr, [0, 7, 21])) await recipeCheck('valdemarsro', u);
+const ar = await sample('https://www.arla.dk/sitemap.xml?type=Modules.Recipes.Business.SitemapUrlWriter.RecipeSitemapUrlWriter', (u) => dish.test(u));
+for (const u of pick(ar, [0, 30])) await recipeCheck('arla', u);
+const sb = await sample('https://spisbedre.dk/opskrifter/sitemap.xml', (u) => dish.test(u));
+for (const u of pick(sb, [0, 30])) await recipeCheck('spisbedre', u);
+const dk = await sample('https://www.dk-kogebogen.dk/sitemap/sitemap_retter-2.xml', () => true);
+for (const u of pick(dk, [0, 50])) await recipeCheck('dk-kogebogen', u);
+let mv = [];
+for (let i = 1; i <= 5; i++) mv.push(...await sample(`https://madensverden.dk/post-sitemap${i === 1 ? '' : i}.xml`, (u) => dish.test(u)));
+console.log('madensverden dish-like total:', mv.length);
+let mm = [];
+for (let i = 1; i <= 4; i++) mm.push(...await sample(`https://mummum.dk/post-sitemap${i === 1 ? '' : i}.xml`, (u) => dish.test(u)));
+console.log('mummum dish-like total:', mm.length);
 
-// Dagrofa: a MENY store subdomain and the sitemaps.
-for (const u of ['https://meny.dk/meny/sitemap.xml', 'https://parkvej.meny.dk/robots.txt', 'https://parkvej.meny.dk/sitemap.xml']) {
+// Can a recipe image be shown from another site (no Referer)?
+for (const u of pick(mv, [3]).concat(pick(mm, [3]))) {
   const r = await get(u);
-  head('dagrofa ' + u, r);
-  if (u.endsWith('robots.txt')) console.log(r.text.slice(0, 600));
-  else console.log('  ', locs(r.text).length, 'locs:', locs(r.text).slice(0, 8).join(' '));
-}
-const menyProducts = (await get('https://parkvej.meny.dk/sitemap.xml')).text;
-const mp = locs(menyProducts).find((u) => /produkter\//.test(u));
-if (mp) {
-  const r = await get(mp);
-  head('meny product', r);
-  const prod = ldTypes(r.text).blocks.find((b) => /"Product"/.test(b));
-  console.log('  product:', prod?.replace(/\s+/g, ' ').slice(0, 500));
-}
-
-// Coop: anything product-like in the sitemaps?
-for (const u of ['https://coop.dk/sitemap.xml', 'https://365discount.coop.dk/sitemap.xml']) {
-  const r = await get(u);
-  const l = locs(r.text);
-  head('coop ' + u, r);
-  console.log('  ', l.length, 'locs; product-like:', l.filter((x) => /produkt|vare|product/i.test(x)).slice(0, 5).join(' '));
+  const img = r.text.match(/<meta property="og:image" content="([^"]+)"/)?.[1];
+  if (!img) continue;
+  await sleep(600);
+  const res = await fetch(img, { headers: { 'User-Agent': UA }, referrerPolicy: 'no-referrer' });
+  console.log(`\nimage ${img} → ${res.status} ${res.headers.get('content-type')} ${res.headers.get('content-length')} b, cache: ${res.headers.get('cache-control')}`);
+  const srcset = r.text.match(/srcset="([^"]+)"/)?.[1];
+  console.log('  srcset sample:', srcset?.slice(0, 300));
 }
