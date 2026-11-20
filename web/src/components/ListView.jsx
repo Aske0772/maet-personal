@@ -2,10 +2,14 @@ import { useState } from 'react';
 import { Check, Share, Undo } from './icons.jsx';
 import { Qty } from './Qty.jsx';
 import { isExact } from '../lib/pricing.js';
-import { kr, packSize, productSize, capitalize, sourceParts, updatedLabel, qty } from '../lib/format.js';
+import { kr, packSize, productSize, capitalize, sourceParts, updatedLabel, qty, andList } from '../lib/format.js';
+import { dayLabel, weekday, DAY_NAMES } from '../lib/dates.js';
 import { AddItem } from './AddItem.jsx';
 
-export function ListView({ data, list, checked, stores, countOf, onCheck, onStep, onStepProduct, onBackHome }) {
+// "Nettos", "REMA 1000s", "Bilkas" – a name ending in s, x or z takes an apostrophe.
+const genitive = (name) => (/[sxz]$/i.test(name) ? `${name}'` : `${name}s`);
+
+export function ListView({ data, list, checked, stores, planned = {}, countOf, onCheck, onStep, onStepProduct, onBackHome, onStores }) {
   const storesById = Object.fromEntries(data.stores.map((s) => [s.id, s]));
   const [toast, setToast] = useState('');
 
@@ -62,6 +66,18 @@ export function ListView({ data, list, checked, stores, countOf, onCheck, onStep
           </button>
         )}
       </header>
+      {planned.ahead && (
+        <button type="button" className="shop-when" onClick={onStores} aria-label={`Handl ${dayLabel(planned.start)}. Skift handledag`}>
+          <span>{planned.next ? 'Næste uge · ' : ''}Handl {dayLabel(planned.start)}</span>
+          <span className="shop-when-change">Skift dag</span>
+        </button>
+      )}
+      {planned.missing?.length > 0 && (
+        <p className="shop-group-hint shop-missing">
+          {andList(planned.missing.map((s) => genitive(s.name)))} {planned.missing.length > 1 ? 'aviser' : 'avis'} for {DAY_NAMES[weekday(planned.start)].toLowerCase()} er ikke ude endnu.
+          {' '}Indtil den er, regnes der med hyldepriser og de tilbud, der stadig gælder.
+        </p>
+      )}
 
       {empty ? (
         <div className="empty"><p>Listen fyldes, når du tilføjer retter til ugen eller selv tilføjer varer.</p></div>
@@ -82,7 +98,7 @@ export function ListView({ data, list, checked, stores, countOf, onCheck, onStep
         </div>
       )}
 
-      <AddItem stores={stores} storesById={storesById} ingredients={data.ingredients} countOf={countOf} onStep={onStepProduct} />
+      <AddItem stores={stores} storesById={storesById} ingredients={data.ingredients} countOf={countOf} onStep={onStepProduct} at={planned.at} />
 
       {list.groups.map((g) => {
         const store = storesById[g.key];

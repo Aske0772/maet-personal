@@ -9,8 +9,6 @@ export const DEPTH_WEIGHT = 0.5;
 export const ROTATION_WEEKS = 2;
 // …unless a hero ingredient is at least this much off: a great tilbud may come back.
 export const COMEBACK_DEPTH = 0.5;
-// Weeks of past plans kept on the phone.
-export const HISTORY_WEEKS = 4;
 
 const median = (xs) => {
   const s = [...xs].sort((a, b) => a - b);
@@ -42,42 +40,9 @@ export function dishDepth(data, heroes) {
   return heroes.reduce((best, h) => Math.max(best, offerDepth(data, h.ingredientId, h.offer)), 0);
 }
 
-// ISO week keys ("2026-W44") for the `count` weeks before `week`.
-export function previousWeeks(week, count) {
-  const [year, w] = week.split('-W').map(Number);
-  // Monday of ISO week 1 is the Monday on or before 4 January.
-  const jan4 = new Date(Date.UTC(year, 0, 4));
-  const monday = new Date(jan4);
-  monday.setUTCDate(jan4.getUTCDate() - ((jan4.getUTCDay() || 7) - 1) + (w - 1) * 7);
-  return Array.from({ length: count }, (_, i) => {
-    const d = new Date(monday);
-    d.setUTCDate(monday.getUTCDate() - 7 * (i + 1));
-    return weekKeyOf(d);
-  });
-}
-
-function weekKeyOf(date) {
-  const d = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
-  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
-  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
-  const n = Math.ceil(((d - yearStart) / 86400000 + 1) / 7);
-  return `${d.getUTCFullYear()}-W${String(n).padStart(2, '0')}`;
-}
-
-// Remember which dishes were planned in a week that just ended. Keeps the
-// most recent HISTORY_WEEKS weeks.
-export function archiveWeek(past, week, recipeIds) {
-  if (!week || recipeIds.length === 0) return past;
-  const weeks = { ...past.weeks, [week]: [...new Set(recipeIds)] };
-  const keep = Object.keys(weeks).sort().slice(-HISTORY_WEEKS);
-  return { ...past, weeks: Object.fromEntries(keep.map((k) => [k, weeks[k]])) };
-}
-
 // items: [{ recipe, heroes, price }] as built by the deck.
-export function rankDeck(data, items, { week, past = { weeks: {} } } = {}) {
-  const recent = new Set(
-    week ? previousWeeks(week, ROTATION_WEEKS).flatMap((k) => past.weeks?.[k] ?? []) : []
-  );
+// recent: ids of dishes planned in the last ROTATION_WEEKS weeks (lib/weeks.js recentDishes).
+export function rankDeck(data, items, { recent = new Set() } = {}) {
   return items
     .map((item) => {
       const depth = dishDepth(data, item.heroes);

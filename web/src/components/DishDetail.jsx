@@ -4,7 +4,7 @@ import { X, Heart, Minus, Plus, Clock, Tag, Check } from './icons.jsx';
 import { DIET_LABEL } from './SwipeView.jsx';
 import { priceDish, isExact, coverage } from '../lib/pricing.js';
 import { kr, krSmall, qty, capitalize, sourceParts } from '../lib/format.js';
-import { layoutWeek, DAY_SHORT, DAY_NAMES } from '../lib/week.js';
+import { layoutWeek, eveningName, eveningShort } from '../lib/week.js';
 
 // Order of ingredient groups in the dish view (keys from server CATEGORIES).
 const CATEGORY_ORDER = ['kod', 'fisk', 'gront', 'mejeri', 'brod', 'kolonial', 'frost'];
@@ -18,12 +18,15 @@ const groupByCategory = (lines) =>
 
 // Full-screen dish view: the photo fills the screen and a frosted glass panel
 // holds everything about the dish. mode: 'add' (from the deck) or 'edit' (from the week).
-export function DishDetail({ data, recipe, item, mode, prefs, plan, week = {}, saved, onToggleSave, onConfirm, onReplace, onRemove, onClose }) {
+export function DishDetail({ data, recipe, item, mode, prefs, plan, week = {}, planned = {}, saved, onToggleSave, onConfirm, onReplace, onRemove, onClose }) {
   const [days, setDays] = useState(item?.days ?? 1);
   const [people, setPeople] = useState(item?.people ?? prefs.people);
   const [staples, setStaples] = useState(item?.staples ?? []);
   // null until picked: a new dish then takes the first free evening.
-  const [day, setDay] = useState(() => (item ? layoutWeek(plan).starts[item.id] ?? null : null));
+  // The week the dish goes in: its evenings and the day it starts.
+  const evenings = planned.evenings ?? 7;
+  const weekStart = planned.start;
+  const [day, setDay] = useState(() => (item ? layoutWeek(plan, evenings).starts[item.id] ?? null : null));
   const [tab, setTab] = useState('ingredienser');
   const [picking, setPicking] = useState(false);
   const closeRef = useRef(null);
@@ -78,13 +81,14 @@ export function DishDetail({ data, recipe, item, mode, prefs, plan, week = {}, s
   const toggleStaple = (id) => setStaples((s) => (s.includes(id) ? s.filter((x) => x !== id) : [...s, id]));
   const add = () => onConfirm({ days, people, staples, day });
   // Where the dish lands as things stand, shown before anything is picked.
-  const shownDay = day ?? layoutWeek([...plan.filter((p) => p.id !== item?.id), { id: '_', days }]).starts._ ?? null;
+  const shownDay = day ?? layoutWeek([...plan.filter((p) => p.id !== item?.id), { id: '_', days }], evenings).starts._ ?? null;
 
   // A new dish can take the place of one already in the week. When adding it
   // would go past 7 evenings, replacing becomes the main action.
   const plannedDays = plan.reduce((n, p) => n + p.days, 0);
   const canReplace = mode === 'add' && plan.length > 0;
-  const full = canReplace && plannedDays + days > 7;
+  const full = canReplace && plannedDays + days > evenings;
+  const toWeek = planned.next ? 'Tilføj til næste uge' : 'Tilføj til ugen';
 
   return (
     <div className="detail" role="dialog" aria-modal="true" aria-label={recipe.title}>
@@ -111,10 +115,10 @@ export function DishDetail({ data, recipe, item, mode, prefs, plan, week = {}, s
         </div>
 
         <div className="detail-pills">
-          <Counter label="Dage" value={days} max={7} onChange={setDays} />
+          <Counter label="Dage" value={days} max={evenings} onChange={setDays} />
           <Counter label="Personer" value={people} max={12} onChange={setPeople} />
         </div>
-        <DayPicker day={shownDay} days={days} onChange={setDay} />
+        <DayPicker day={shownDay} days={days} start={weekStart} evenings={evenings} onChange={setDay} />
 
         <div className="detail-price" aria-live="polite">
           <span className="detail-total">{kr(price.total)}</span>
@@ -198,7 +202,7 @@ export function DishDetail({ data, recipe, item, mode, prefs, plan, week = {}, s
       </div>
 
       <div className="detail-actions" inert={picking ? '' : undefined}>
-        {full && <p className="detail-hint">Ugen er fyldt · {plannedDays} af 7 aftener</p>}
+        {full && <p className="detail-hint">{planned.next ? 'Næste uge' : 'Ugen'} er fyldt · {plannedDays} af {evenings} aftener</p>}
         {mode === 'edit' && (
           <button type="button" className="glass-btn wide-text" onClick={onRemove}>Fjern</button>
         )}
@@ -208,7 +212,7 @@ export function DishDetail({ data, recipe, item, mode, prefs, plan, week = {}, s
           </button>
         )}
         <button type="button" className="primary wide" onClick={full ? openPicker : add}>
-          {full ? 'Erstat en ret' : `${mode === 'edit' ? 'Gem ændringer' : 'Tilføj til ugen'} · ${sharesPacks ? `+${kr(extraCost)}` : kr(price.total)}`}
+          {full ? 'Erstat en ret' : `${mode === 'edit' ? 'Gem ændringer' : toWeek} · ${sharesPacks ? `+${kr(extraCost)}` : kr(price.total)}`}
         </button>
       </div>
 
@@ -318,21 +322,21 @@ function IngredientBody({ line, storesById, week }) {
   );
 }
 
-// Seven evenings, Monday first. A dish over several days lights up each of them.
-function DayPicker({ day, days, onChange }) {
-  const start = day == null ? null : Math.min(day, 7 - days);
+// The week's evenings, the shopping day first. A dish over several days lights up each of them.
+function DayPicker({ day, days, start: weekStart, evenings, onChange }) {
+  const start = day == null ? null : Math.min(day, evenings - days);
   return (
     <div className="counter" role="group" aria-label="Aften">
       <span className="counter-label">Aften</span>
-      <div className="day-picker">
-        {DAY_SHORT.map((name, i) => {
+      <div className="day-picker" style={{ gridTemplateColumns: `repeat(${evenings}, 1fr)` }}>
+        {Array.from({ length: evenings }, (_, i) => {
           const on = start != null && i >= start && i < start + days;
           return (
             <button
-              key={name} type="button" className={on ? (i === start ? 'is-on' : 'is-span') : ''}
-              aria-pressed={i === start} aria-label={DAY_NAMES[i]} disabled={i + days > 7} onClick={() => onChange(i)}
+              key={i} type="button" className={on ? (i === start ? 'is-on' : 'is-span') : ''}
+              aria-pressed={i === start} aria-label={eveningName(weekStart, i)} disabled={i + days > evenings} onClick={() => onChange(i)}
             >
-              {name.slice(0, 2)}
+              {eveningShort(weekStart, i).slice(0, 2)}
             </button>
           );
         })}

@@ -65,11 +65,11 @@ web/
   src/components/       Onboarding, SwipeView (fotokort), DishDetail (glaspanel), WeekView, HomeView, ListView
 ```
 
-**Hvilke retter vises?** En ret kommer i bunken, når mindst én af dens hero-ingredienser (fx kyllingebryst i kylling i karry) er på tilbud i en af dine butikker. Bunken sorteres efter pris pr. portion, trukket frem af tilbudsdybden (tilbudspris mod avisens førpris eller kædernes hyldepris). Retter du planlagde de to forrige uger hviler bagerst, medmindre de er på et tilbud med mindst 50 % rabat. Historikken gemmes kun på telefonen (`web/src/lib/rank.js`).
+**Hvilke retter vises?** En ret kommer i bunken, når mindst én af dens hero-ingredienser (fx kyllingebryst i kylling i karry) er på tilbud i en af dine butikker. Bunken sorteres efter pris pr. portion, trukket frem af tilbudsdybden (tilbudspris mod avisens førpris eller kædernes hyldepris). Retter du planlagde de to forrige uger hviler bagerst, medmindre de er på et tilbud med mindst 50 % rabat. Historikken gemmes kun på telefonen (`web/src/lib/rank.js`, `web/src/lib/weeks.js`).
 
 **Hvordan regnes prisen?** For hver ingrediens: mængde × personer × dage ÷ opskriftens portioner, altid købt i hele pakker. På indkøbslisten lægges mængderne sammen på tværs af retter, så to retter med løg deler ét net.
 
-**Hvor kommer priserne fra?** Kun priser, der gælder lige nu (startet og ikke udløbet), bruges. I prioriteret rækkefølge:
+**Hvor kommer priserne fra?** Kun priser, der gælder den dag, du handler, bruges: serveren sender alt, der ikke er udløbet og starter inden for 10 dage (også næste uges avis, når kæden har lagt den ud), og appen vælger dem, der gælder på handledagen (`web/src/lib/weeks.js` `pricesAt`). I prioriteret rækkefølge:
 
 | Kilde | Hvad | Vises som |
 |---|---|---|
@@ -88,6 +88,10 @@ Kun `tilbud` afgør, hvilke retter der kommer i bunken. Vejledende/anslåede bel
 **Opskrifter:** 275 aftensretter fra Arla, Valdemarsro, Madens Verden og Mummum (se [docs/kilder-pr-kaede.md](docs/kilder-pr-kaede.md)). Kun fakta kommer fra kilden: ingredienser, mængder, tid, portioner, billed-URL og link. Fremgangsmåden er skrevet om med egne ord (samme rækkefølge, temperaturer og tider) i `server/data/recipe-text.json`, og under trinene står "Inspireret af <kilde>" med link. Ny import: kør workflowet *Importér opskrifter*, og derefter `node scripts/build-recipes.mjs --report` for at se, hvilke ingredienser der mangler.
 
 **Billeder:** vises fra kildens server (ligger ikke i repoet) med `referrerpolicy="no-referrer"`. Kortet har billedets hovedfarve som baggrund fra start, de næste 5 billeder i bunken hentes og afkodes på forhånd, og et billede der fejler bliver til en farvet tallerken. Kildernes lange cache-headers gør, at billederne kommer med det samme ved næste besøg.
+
+**Uger og handledag:** Ugen går fra den dag, du handler, til den næste – ikke mandag til søndag. Handledagen vælges i butiksarket (pillen på Swipe eller "Skift dag" på Indkøb). Første gang er det den dag, de fleste af dine butikkers aviser starter. Uge har pile: frem til *Næste uge*, tilbage gennem *historikken*. Swipe, Uge og Indkøb arbejder på den uge, du sidst stod på (Swipe viser "Næste uge" ved logoet). Næste uge prisregnes til kl. 12 på handledagen; har en butik ikke lagt sin nye avis ud endnu, siger Indkøb det, og prisen er hyldepris og de tilbud, der stadig gælder. Næste uge regner med det, der er tilbage af Hjemme efter denne uges retter. Skifter du handledag midt i en uge, slutter den uge ved den nye dag (4–10 aftener), og retter på aftener, den ikke længere har, flytter til næste uge. Når ugens sidste aften er gået, bliver næste uge til denne uge, og den gamle går i historikken med det, listen kostede (`web/src/lib/dates.js`, `web/src/lib/weeks.js`).
+
+**Historik:** De sidste 26 uger ligger på telefonen med retter, aftener og pris. Tryk på en ret i en tidligere uge for at lave den igen i den uge, du planlægger. Retter fra de to sidste uger (denne uge medregnet, når du planlægger næste) hviler bagerst i bunken.
 
 **Hjemme:** fanen, hvor du skriver hvad du har (kun madvarer, i g, ml eller stk). Prisen trækker det fra, før der købes hele pakker, og det deles på tværs af ugens retter. Swipe-filteret *Fra Hjemme* viser retter, der bruger det.
 

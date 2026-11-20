@@ -1,25 +1,28 @@
-// The week's dishes laid out on seven evenings, Monday first.
-// A plan item may carry `day` (0 = Monday … 6 = Sunday) and covers `days` evenings from there.
+// The week's dishes laid out on its evenings, the shopping day first. A week has
+// 7 evenings, or 4–10 the week you change shopping day (see lib/dates.js).
+// A plan item may carry `day` (0 = the first evening) and covers `days` evenings from there.
 // Items without a day, or whose day is taken, go on the first free run of evenings.
+import { DAY_NAMES, DAY_SHORT, addDays, weekday } from './dates.js';
 
-export const DAY_SHORT = ['Man', 'Tir', 'Ons', 'Tor', 'Fre', 'Lør', 'Søn'];
-export const DAY_NAMES = ['Mandag', 'Tirsdag', 'Onsdag', 'Torsdag', 'Fredag', 'Lørdag', 'Søndag'];
+// "Lør" and "Lørdag" for evening i of the week starting on `start`.
+export const eveningShort = (start, i) => DAY_SHORT[weekday(addDays(start, i))];
+export const eveningName = (start, i) => DAY_NAMES[weekday(addDays(start, i))];
 
 const fits = (taken, start, len) =>
-  start >= 0 && start + len <= 7 && taken.slice(start, start + len).every((x) => x == null);
+  start >= 0 && start + len <= taken.length && taken.slice(start, start + len).every((x) => x == null);
 
 const take = (taken, start, len, id) => {
   for (let d = start; d < start + len; d++) taken[d] = id;
 };
 
 const firstFree = (taken, len) => {
-  for (let s = 0; s + len <= 7; s++) if (fits(taken, s, len)) return s;
+  for (let s = 0; s + len <= taken.length; s++) if (fits(taken, s, len)) return s;
   return null;
 };
 
 // Free run closest to `near` (ties go to the later evening, so a dish rather slides down than up).
 const nearestFree = (taken, len, near) => {
-  for (let dist = 0; dist < 7; dist++) {
+  for (let dist = 0; dist < taken.length; dist++) {
     if (fits(taken, near + dist, len)) return near + dist;
     if (fits(taken, near - dist, len)) return near - dist;
   }
@@ -27,8 +30,8 @@ const nearestFree = (taken, len, near) => {
 };
 
 // → { starts: { [id]: day }, unplaced: [item] }
-export function layoutWeek(plan) {
-  const taken = Array(7).fill(null);
+export function layoutWeek(plan, evenings = 7) {
+  const taken = Array(evenings).fill(null);
   const starts = {};
   const later = [];
   for (const item of plan) {
@@ -50,18 +53,18 @@ export function layoutWeek(plan) {
 }
 
 // Move one dish to start on `to`. It always gets that evening (pulled earlier if it
-// would run past Sunday). Dishes in the way go to the moved dish's old evening when
+// would run past the last evening). Dishes in the way go to the moved dish's old evening when
 // they fit there, so two dishes swap; otherwise to the nearest free evening.
 // Every placed dish gets an explicit day, so the layout stays put afterwards.
-export function moveItem(plan, id, to) {
+export function moveItem(plan, id, to, evenings = 7) {
   const moving = plan.find((p) => p.id === id);
-  if (!moving || moving.days > 7) return plan;
-  const { starts } = layoutWeek(plan);
+  if (!moving || moving.days > evenings) return plan;
+  const { starts } = layoutWeek(plan, evenings);
   const from = starts[id];
-  const target = Math.max(0, Math.min(to, 7 - moving.days));
+  const target = Math.max(0, Math.min(to, evenings - moving.days));
   const end = target + moving.days;
 
-  const taken = Array(7).fill(null);
+  const taken = Array(evenings).fill(null);
   take(taken, target, moving.days, id);
   const next = { [id]: target };
 
@@ -87,14 +90,4 @@ export function moveItem(plan, id, to) {
     const { day, ...rest } = p;
     return next[p.id] == null ? rest : { ...rest, day: next[p.id] };
   });
-}
-
-// Monday of an ISO week key such as "2026-W46", as a local date.
-export function weekMonday(key) {
-  const m = /^(\d{4})-W(\d{1,2})$/.exec(key ?? '');
-  if (!m) return null;
-  const jan4 = new Date(Number(m[1]), 0, 4);
-  const monday = new Date(jan4);
-  monday.setDate(jan4.getDate() - ((jan4.getDay() + 6) % 7) + (Number(m[2]) - 1) * 7);
-  return monday;
 }

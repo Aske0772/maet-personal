@@ -16,7 +16,8 @@ const LIMIT = 30;
 // the list yourself, for what no recipe covers (coffee, oats, a snack). The aisle
 // chips narrow the search, or show an aisle on their own.
 // countOf(product) → { n, home }: how many are on the list, also as part of a dish line.
-export function AddItem({ stores, storesById, ingredients, countOf, onStep }) {
+// at: when you shop (ms); only products valid then are shown.
+export function AddItem({ stores, storesById, ingredients, countOf, onStep, at = Date.now() }) {
   const [query, setQuery] = useState('');
   const [cat, setCat] = useState(null);
   const [catalog, setCatalog] = useState(null);
@@ -42,6 +43,7 @@ export function AddItem({ stores, storesById, ingredients, countOf, onStep }) {
     const byKey = new Map();
     for (const i of items) {
       if (!stores.includes(i.store) || (cat && i.cat !== cat)) continue;
+      if ((i.from && Date.parse(i.from) > at) || (i.until && Date.parse(i.until) <= at)) continue;
       const score = nameScore(i.title, words);
       if (score == null) continue;
       const key = [i.store, norm(i.title), i.price, i.kind].join('|');
@@ -59,7 +61,7 @@ export function AddItem({ stores, storesById, ingredients, countOf, onStep }) {
     found.sort((a, b) => a.real - b.real || (a.score > 0) - (b.score > 0) || a.i.price - b.i.price);
     return { hits: found.slice(0, LIMIT).map((f) => f.i), more: Math.max(0, found.length - LIMIT) };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items, query, cat, stores]);
+  }, [items, query, cat, stores, at]);
 
   const cats = Object.entries(catalog?.categories ?? FALLBACK_CATS);
 

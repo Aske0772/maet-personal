@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest';
-import { layoutWeek, moveItem, weekMonday } from './week.js';
+import { eveningShort, layoutWeek, moveItem } from './week.js';
+import { isoWeekMonday } from './dates.js';
 
 const item = (id, days = 1, day) => (day == null ? { id, days } : { id, days, day });
 const daysOf = (plan) => Object.fromEntries(plan.map((p) => [p.id, p.day]));
@@ -54,10 +55,23 @@ describe('moveItem', () => {
   });
 });
 
-describe('weekMonday', () => {
+describe('weeks of other lengths', () => {
+  it('lays out and moves dishes on a shorter or longer week', () => {
+    const plan = [item('a', 3), item('b', 3)];
+    expect(layoutWeek(plan, 5).unplaced.map((p) => p.id)).toEqual(['b']);
+    expect(layoutWeek(plan, 9).unplaced).toEqual([]);
+    expect(daysOf(moveItem([item('a')], 'a', 8, 9))).toEqual({ a: 8 });
+  });
+
+  it('names the evenings from the shopping day', () => {
+    expect(eveningShort('2026-11-21', 0)).toBe('Lør');
+    expect(eveningShort('2026-11-21', 2)).toBe('Man');
+  });
+});
+
+describe('isoWeekMonday', () => {
   it('finds the Monday of an ISO week', () => {
-    const d = weekMonday('2026-W46');
-    expect([d.getFullYear(), d.getMonth() + 1, d.getDate(), d.getDay()]).toEqual([2026, 11, 9, 1]);
-    expect(weekMonday('2027-W01').getDate()).toBe(4);
+    expect(isoWeekMonday('2026-W46')).toBe('2026-11-09');
+    expect(isoWeekMonday('2027-W01')).toBe('2027-01-04');
   });
 });

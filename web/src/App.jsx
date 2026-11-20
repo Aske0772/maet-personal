@@ -2,8 +2,13 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { fetchWeek } from './lib/api.js';
 import { usePersistent } from './lib/persist.js';
 import { keepAdjust, shoppingList } from './lib/pricing.js';
-import { archiveWeek } from './lib/rank.js';
-import { moveItem } from './lib/week.js';
+import { ROTATION_WEEKS } from './lib/rank.js';
+import { layoutWeek, moveItem } from './lib/week.js';
+import { isoDate, priceTime, weekLength } from './lib/dates.js';
+import {
+  addToHistory, archiveEntry, avisMissing, changeShopDay, avisStartDay, migrateHistory, migrateWeek, newWeek, nextWeekOf,
+  pricesAt, recentDishes, rollWeeks
+} from './lib/weeks.js';
 import { Onboarding } from './components/Onboarding.jsx';
 import { SwipeView } from './components/SwipeView.jsx';
 import { DishDetail } from './components/DishDetail.jsx';
@@ -12,20 +17,30 @@ import { ListView } from './components/ListView.jsx';
 import { HomeView } from './components/HomeView.jsx';
 import { carryOver, migrateAtHome, pantryAmounts } from './lib/pantry.js';
 import { StorePicker } from './components/StorePicker.jsx';
+import { ShopDayPicker } from './components/ShopDayPicker.jsx';
 import { Sheet, Stepper } from './components/ui.jsx';
 import { Cards, Calendar, List, Home } from './components/icons.jsx';
 
 // pantry: Hjemme, { [ingredientId]: { amount, unit } } – amount null means "har nok".
-const PREFS = { onboarded: false, stores: [], people: 2, diet: 'alle', atHome: [], pantry: {}, saved: [], budget: null };
-// Weekly state is tagged with the ISO week and starts fresh when the avis changes.
-// extras: products added by hand in "Tilføj vare" ({ id, store, title, price, amount, unit, kind, until, qty }).
-// plan items: { id, recipeId, days, people, staples, day? } – day 0 = Monday, see lib/week.js.
-// adjust: packs bought beyond what the dishes need, per ingredient (+ and − on the list).
-// bought: what the list bought of an ingredient when it was ticked off, so the rest
-// of the bag can go into Hjemme when the week ends.
-const WEEK = { week: null, plan: [], seen: [], checked: [], extras: [], adjust: {}, bought: {} };
-// Dishes planned in earlier weeks, so the deck can rest them for a while. Stays on the phone.
-const PAST = { weeks: {} };
+// shopDay: the weekday you shop (0 = mandag). Weeks run from it to the next (lib/dates.js).
+const PREFS = { onboarded: false, stores: [], people: 2, diet: 'alle', atHome: [], pantry: {}, saved: [], budget: null, shopDay: null };
+// The week you are in and the coming one, each from its shopping day (lib/weeks.js).
+// Data from before, one ISO week in "mad.week", becomes the current week from its Monday.
+const OLD_WEEK = (() => {
+  try {
+    return JSON.parse(localStorage.getItem('mad.week'));
+  } catch {
+    return null;
+  }
+})();
+const WEEKS = migrateWeek(OLD_WEEK) ?? { current: null, next: null };
+// Weeks that have ended, newest first: the history in Uge, and the dishes the deck rests.
+const PAST = { list: [] };
+const STALE_MS = 15 * 60_000;
+
+// What is left of Hjemme once a week's dishes are made: what new dishes can use.
+const leftOf = (list, fallback) =>
+  (list ? Object.fromEntries(Object.entries(list.spare).filter(([id]) => list.spareFrom[id] === 'home')) : fallback);
 
 export default function App() {
   const [data, setData] = useState(null);
@@ -41,11 +56,24 @@ export default function App() {
     () => (data ? pantryAmounts(storedPrefs.pantry, data.ingredients) : {}),
     [data, storedPrefs.pantry]
   );
-  const prefs = useMemo(() => ({ ...storedPrefs, atHome: home }), [storedPrefs, home]);
   const setPantry = (fn) => setPrefs((p) => ({ ...p, pantry: fn(p.pantry ?? {}) }));
-  const [state, setState] = usePersistent('mad.week', WEEK);
+  const [weeks, setWeeks] = usePersistent('mad.weeks', WEEKS);
   const [past, setPast] = usePersistent('mad.history', PAST);
-  const [tab, setTab] = useState('swipe');
+  // Which week Swipe, Uge and Indkøb work on, and which page Uge shows:
+  // 1 = næste uge, 0 = denne uge, −n = n weeks back in the history.
+  const [active, setActive] = useState('current');
+  const [page, setPage] = useState(0);
+  // The time prices and weeks go by. Moves on when the app comes back into view.
+  const [clock, setClock] = useState(() => Date.now());
+  const today = isoDate(new Date(clock));
+  // Until you pick one: the day most of your stores start their avis.
+  const shopDay = storedPrefs.shopDay ?? (data ? avisStartDay(data, storedPrefs.stores) : 0);
+  const [tab, setTabState] = useState('swipe');
+  // Uge opens on the week you work on, not on a week from the history.
+  const setTab = (t) => {
+    setTabState(t);
+    setPage((p) => (p < 0 ? (active === 'next' ? 1 : 0) : p));
+  };
   const [sheet, setSheet] = useState(null); // { recipe, item?, mode, fromSwipe? }
   const [storesOpen, setStoresOpen] = useState(false);
   const [history, setHistory] = useState([]);
@@ -61,9 +89,10 @@ export default function App() {
 
     // Keep prices current: refetch when the app comes back into view or every 15 min.
     // A failed background refresh keeps the prices already shown.
-    const STALE_MS = 15 * 60_000;
     const refetchIfStale = () => {
-      if (document.visibilityState === 'visible' && Date.now() - fetchedAt > STALE_MS) load().catch(() => {});
+      if (document.visibilityState !== 'visible') return;
+      setClock(Date.now());
+      if (Date.now() - fetchedAt > STALE_MS) load().catch(() => {});
     };
     document.addEventListener('visibilitychange', refetchIfStale);
     const timer = setInterval(refetchIfStale, STALE_MS);
@@ -73,33 +102,115 @@ export default function App() {
     };
   }, []);
 
+  // Data from before this version: the old history, the old week key, and Monday,
+  // the shopping day that week was planned with.
   useEffect(() => {
-    if (!data || state.week === data.week) return;
-    // A new avis week: remember what was planned before starting fresh.
-    setPast((p) => archiveWeek(p, state.week, state.plan.map((i) => i.recipeId)));
-    // The old week's dishes count as made: what they used comes off Hjemme, and
-    // the rest of every bag ticked off as bought goes into it.
-    if (state.week && state.plan.length) {
-      const old = shoppingList(data, state.plan, { stores: prefs.stores, atHome: prefs.atHome, adjust: state.adjust });
-      setPrefs((p) => {
-        const { pantry, added } = carryOver(data, state, p.pantry ?? {}, old.needs);
-        return { ...p, pantry, carried: added.length ? { week: data.week, items: added } : null };
-      });
+    if (past.weeks) setPast(migrateHistory);
+  }, [past.weeks, setPast]);
+  useEffect(() => {
+    if (!OLD_WEEK) return;
+    const migrated = migrateWeek(OLD_WEEK);
+    if (migrated && !weeks.current) setWeeks(migrated);
+    if (storedPrefs.shopDay == null && migrated) setPrefs((p) => ({ ...p, shopDay: 0 }));
+    try {
+      localStorage.removeItem('mad.week');
+    } catch {
+      /* storage blocked */
     }
-    setState({ ...WEEK, week: data.week });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [data, state.week, state.plan, setState, setPast]);
+  }, []);
 
-  const list = useMemo(
-    () => (data ? shoppingList(data, state.plan, { stores: prefs.stores, atHome: prefs.atHome, extras: state.extras, adjust: state.adjust }) : null),
-    [data, state.plan, prefs.stores, prefs.atHome, state.extras, state.adjust]
+  // Move on when a week's last evening has passed. An ended week counts as made:
+  // what its dishes used comes off Hjemme, the rest of every bag ticked off as
+  // bought goes into it, and the week goes into the history.
+  useEffect(() => {
+    if (!data || !storedPrefs.onboarded) return;
+    if (storedPrefs.shopDay == null) setPrefs((p) => ({ ...p, shopDay }));
+    const r = rollWeeks(weeks, today, shopDay);
+    if (!r.changed) return;
+    if (r.ended.length) {
+      let pantry = storedPrefs.pantry ?? {};
+      let hist = migrateHistory(past);
+      const added = [];
+      for (const w of r.ended) {
+        const d = pricesAt(data, priceTime(w.start, clock));
+        const atHome = pantryAmounts(pantry, data.ingredients);
+        const old = shoppingList(d, w.plan, { stores: storedPrefs.stores, atHome, extras: w.extras, adjust: w.adjust });
+        const out = carryOver(d, w, pantry, old.needs);
+        pantry = out.pantry;
+        added.push(...out.added);
+        hist = addToHistory(hist, archiveEntry(w, shopDay, w.summary ?? old));
+      }
+      setPrefs((p) => ({ ...p, pantry, carried: added.length ? { week: r.weeks.current.start, items: added } : null }));
+      setPast(hist);
+    }
+    setWeeks(r.weeks);
+    setActive('current');
+    setPage(0);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data, today, shopDay, storedPrefs.onboarded]);
+
+  const current = weeks.current ?? newWeek(today);
+  const next = nextWeekOf({ ...weeks, current }, shopDay);
+  const state = active === 'next' ? next : current;
+  const evenings = weekLength(state.start, shopDay);
+  // Every change goes to the week you work on. The coming week is stored from its first change.
+  const setState = (fn) => setWeeks((w) => {
+    if (!w.current) return w;
+    if (active === 'next') return { ...w, next: fn(nextWeekOf(w, shopDay)) };
+    return { ...w, current: fn(w.current) };
+  });
+
+  // Prices as they are on each week's shopping day (now, once it has started).
+  const currentData = useMemo(() => data && pricesAt(data, priceTime(current.start, clock)), [data, current.start, clock]);
+  const nextData = useMemo(() => data && pricesAt(data, priceTime(next.start, clock)), [data, next.start, clock]);
+  const weekData = active === 'next' ? nextData : currentData;
+
+  const currentList = useMemo(
+    () => (currentData ? shoppingList(currentData, current.plan, { stores: storedPrefs.stores, atHome: home, extras: current.extras, adjust: current.adjust }) : null),
+    [currentData, current.plan, storedPrefs.stores, home, current.extras, current.adjust]
   );
-  // What is left of Hjemme once the week's dishes are made: what new dishes can use.
-  const homeLeft = useMemo(() => {
-    if (!list) return home;
-    return Object.fromEntries(Object.entries(list.spare).filter(([id]) => list.spareFrom[id] === 'home'));
-  }, [list, home]);
+  const currentLeft = useMemo(() => leftOf(currentList, home), [currentList, home]);
+  // The coming week counts on what this week leaves of Hjemme. The rest of this
+  // week's bags joins Hjemme when the week ends.
+  const atHome = active === 'next' ? currentLeft : home;
+  const prefs = useMemo(() => ({ ...storedPrefs, atHome }), [storedPrefs, atHome]);
+  const nextList = useMemo(
+    () => (active === 'next' && nextData ? shoppingList(nextData, next.plan, { stores: storedPrefs.stores, atHome: currentLeft, extras: next.extras, adjust: next.adjust }) : null),
+    [active, nextData, next.plan, storedPrefs.stores, currentLeft, next.extras, next.adjust]
+  );
+  const list = active === 'next' ? nextList : currentList;
+  const homeLeft = useMemo(() => leftOf(list, atHome), [list, atHome]);
   const week = { adjust: state.adjust, homeLeft };
+
+  // What the running week costs, kept on it so the history shows the prices you shopped at.
+  useEffect(() => {
+    if (!currentList || !weeks.current || current.start > today) return;
+    const summary = { total: currentList.total, perMeal: currentList.perMeal, meals: currentList.meals };
+    const was = weeks.current.summary;
+    if (was && was.total === summary.total && was.meals === summary.meals) return;
+    setWeeks((w) => (w.current ? { ...w, current: { ...w.current, summary } } : w));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [currentList, today]);
+
+  // The week you work on, for the views: its start, evenings and how to name it.
+  const plannedWeek = {
+    start: state.start, evenings, next: active === 'next', today, at: priceTime(state.start, clock),
+    // Not started yet: shopping is still ahead, priced for that day.
+    ahead: state.start > today,
+    missing: data && state.start > today ? avisMissing(data, storedPrefs.stores, priceTime(state.start, clock)) : []
+  };
+
+  // Uge's pages: the history, this week and the coming one. Landing on this or the
+  // coming week makes it the one Swipe and Indkøb work on.
+  const goToPage = (n) => {
+    setPage(n);
+    if (n >= 0) setActive(n === 1 ? 'next' : 'current');
+  };
+  const recent = useMemo(
+    () => recentDishes(past, ROTATION_WEEKS, active === 'next' ? current : null),
+    [past, active, current]
+  );
 
   const markSeen = (id) => setState((s) => ({ ...s, seen: [...s.seen, id] }));
   const unSee = (id) => setState((s) => ({ ...s, seen: s.seen.filter((x) => x !== id) }));
@@ -134,10 +245,10 @@ export default function App() {
       let plan = item
         ? s.plan.map((p) => (p.id === item.id ? { ...p, days, people, staples } : p))
         : [...s.plan, { id, recipeId: recipe.id, days, people, staples }];
-      if (day != null) plan = moveItem(plan, id, day);
+      if (day != null) plan = moveItem(plan, id, day, evenings);
       const seen = s.seen.includes(recipe.id) ? s.seen : [...s.seen, recipe.id];
       // Extra packs from + become the new dish's packs, as its price promised.
-      const adjust = item ? s.adjust : keepAdjust(data, s.plan, plan, { stores: prefs.stores, atHome: prefs.atHome, adjust: s.adjust });
+      const adjust = item ? s.adjust : keepAdjust(weekData, s.plan, plan, { stores: prefs.stores, atHome: prefs.atHome, adjust: s.adjust });
       return { ...s, plan, seen, adjust };
     });
     setSheet(null);
@@ -177,13 +288,13 @@ export default function App() {
 
   // + and − on the list. A dish's ingredient never goes below one pack: the last −
   // means "har det hjemme". Basisvarer stop at one.
-  const atHome = (id) => {
+  const markAtHome = (id) => {
     setPantry((pantry) => ({ ...pantry, [id]: pantry[id] ?? { amount: null, unit: null } }));
     setState((s) => ({ ...s, adjust: { ...s.adjust, [id]: 0 } }));
   };
   const step = (item, d) => {
     if (item.extra) return d > 0 ? addExtra(item.extra) : removeExtra(item.extra.id);
-    if (d < 0 && item.source.packs <= 1) return item.ing.staple ? undefined : atHome(item.id);
+    if (d < 0 && item.source.packs <= 1) return item.ing.staple ? undefined : markAtHome(item.id);
     setState((s) => ({ ...s, adjust: { ...s.adjust, [item.id]: (s.adjust?.[item.id] ?? 0) + d } }));
   };
   // A product from the search that a dish line already buys counts on that line,
@@ -226,13 +337,15 @@ export default function App() {
   }
 
   const days = state.plan.reduce((sum, i) => sum + i.days, 0);
+  const pastWeek = page < 0 ? past.list?.[-page - 1] ?? null : null;
 
   return (
     <div className="app">
       <main className="main" ref={mainRef}>
         {tab === 'swipe' && (
           <SwipeView
-            data={data} prefs={prefs} setPrefs={setPrefs} plan={state.plan} seen={state.seen} past={past} week={week}
+            data={weekData} prefs={prefs} setPrefs={setPrefs} plan={state.plan} seen={state.seen} recent={recent} week={week}
+            planned={plannedWeek}
             budgetLeft={prefs.budget && list ? prefs.budget - list.total : null}
             onSkip={onSkip} onLike={onLike} onUndo={onUndo} canUndo={history.length > 0}
             onOpen={(recipe) => setSheet({ recipe, mode: 'add' })}
@@ -242,9 +355,11 @@ export default function App() {
         )}
         {tab === 'week' && (
           <WeekView
-            data={data} plan={state.plan} prefs={prefs} list={list} scroller={mainRef} week={week}
+            data={weekData} plan={state.plan} prefs={prefs} list={list} scroller={mainRef} week={week}
+            planned={plannedWeek} page={page} pastWeek={pastWeek} pastCount={past.list?.length ?? 0} shopDay={shopDay}
+            onPage={goToPage}
             onOpen={(recipe, item) => setSheet({ recipe, item, mode: 'edit' })}
-            onMove={(id, day) => setState((s) => ({ ...s, plan: moveItem(s.plan, id, day) }))}
+            onMove={(id, day) => setState((s) => ({ ...s, plan: moveItem(s.plan, id, day, evenings) }))}
             onSuggest={(recipe) => setSheet({ recipe, mode: 'add' })}
             onSwipe={() => setTab('swipe')}
             onBudget={(budget) => setPrefs((p) => ({ ...p, budget }))}
@@ -252,20 +367,20 @@ export default function App() {
         )}
         {tab === 'list' && (
           <ListView
-            data={data} list={list} checked={state.checked} stores={prefs.stores}
-            countOf={countOf} onStep={step} onStepProduct={stepProduct}
+            data={weekData} list={list} checked={state.checked} stores={prefs.stores} planned={plannedWeek}
+            countOf={countOf} onStep={step} onStepProduct={stepProduct} onStores={() => setStoresOpen(true)}
             onCheck={(id) => setState((s) => {
               const bought = { ...(s.bought ?? {}) };
               if (s.checked.includes(id)) delete bought[id];
               else if (list.needs[id]) bought[id] = list.needs[id].bought;
               return { ...s, checked: toggleIn(s.checked, id), bought };
             })}
-            onBackHome={(id) => setPantry((pantry) => { const next = { ...pantry }; delete next[id]; return next; })}
+            onBackHome={(id) => setPantry((pantry) => { const nextPantry = { ...pantry }; delete nextPantry[id]; return nextPantry; })}
           />
         )}
         {tab === 'home' && (
           <HomeView
-            data={data} prefs={prefs} pantry={storedPrefs.pantry ?? {}} onChange={setPantry} week={week}
+            data={weekData} prefs={prefs} pantry={storedPrefs.pantry ?? {}} onChange={setPantry} week={week}
             carried={storedPrefs.carried} onDismissCarried={() => setPrefs((p) => ({ ...p, carried: null }))}
             onOpen={(recipe) => setSheet({ recipe, mode: 'add' })}
           />
@@ -282,7 +397,8 @@ export default function App() {
       {sheet && (
         <DishDetail
           key={sheet.recipe.id + (sheet.item?.id ?? '')}
-          data={data} recipe={sheet.recipe} item={sheet.item} mode={sheet.mode} prefs={prefs} plan={state.plan} week={week}
+          data={weekData} recipe={sheet.recipe} item={sheet.item} mode={sheet.mode} prefs={prefs} plan={state.plan} week={week}
+          planned={plannedWeek}
           saved={prefs.saved.includes(sheet.recipe.id)}
           onToggleSave={() => setPrefs((p) => ({ ...p, saved: toggleIn(p.saved, sheet.recipe.id) }))}
           onConfirm={confirm} onReplace={replace} onRemove={remove} onClose={closeSheet}
@@ -295,11 +411,18 @@ export default function App() {
           stores={data.stores} selected={prefs.stores}
           onChange={(stores) => stores.length && setPrefs((p) => ({ ...p, stores }))}
         />
+        <ShopDayPicker
+          value={shopDay}
+          onChange={(d) => {
+            setWeeks((w) => changeShopDay(w, shopDay, d, layoutWeek));
+            setPrefs((p) => ({ ...p, shopDay: d }));
+          }}
+        />
         <Stepper
           label="Personer som standard" value={prefs.people}
           onChange={(people) => setPrefs((p) => ({ ...p, people }))}
         />
-        <p className="muted small">Tilbud fra uge {data.week.split('-W')[1]} · {data.stores.reduce((n, s) => n + s.offerCount, 0)} madvarer på tilbud</p>
+        <p className="muted small">{data.stores.reduce((n, s) => n + s.offerCount, 0)} madvarer på tilbud lige nu</p>
         <button type="button" className="primary wide" onClick={() => setStoresOpen(false)}>Færdig</button>
       </Sheet>
     </div>

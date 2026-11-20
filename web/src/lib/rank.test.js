@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { offerDepth, rankDeck, previousWeeks, archiveWeek, HISTORY_WEEKS } from './rank.js';
+import { offerDepth, rankDeck } from './rank.js';
 
 const data = {
   ingredients: {
@@ -46,37 +46,20 @@ describe('rankDeck', () => {
   });
 
   it('dishes cooked in the last two weeks go to the back', () => {
-    const past = { weeks: { '2026-W43': ['karry'], '2026-W40': ['wok'] } };
     const deck = rankDeck(data, [
       item('karry', 10, [hero('kylling', { price: 36, amount: 400 })]),
       item('wok', 12, [hero('kylling', { price: 36, amount: 400 })]),
       item('risret', 15, [hero('kylling', { price: 36, amount: 400 })])
-    ], { week: '2026-W44', past });
+    ], { recent: new Set(['karry']) });
     // karry was planned last week; wok four weeks ago is fair game again.
     expect(deck.map((x) => x.recipe.id)).toEqual(['wok', 'risret', 'karry']);
   });
 
   it('a recently cooked dish comes back when its tilbud is great', () => {
-    const past = { weeks: { '2026-W43': ['karry'] } };
     const deck = rankDeck(data, [
       item('karry', 10, [hero('kylling', { price: 10, prePrice: 40, amount: 400 })]),
       item('risret', 9, [hero('kylling', { price: 38, amount: 400 })])
-    ], { week: '2026-W44', past });
+    ], { recent: new Set(['karry']) });
     expect(deck[0].recipe.id).toBe('karry');
-  });
-});
-
-describe('week history', () => {
-  it('knows the weeks before, across a new year', () => {
-    expect(previousWeeks('2026-W44', 2)).toEqual(['2026-W43', '2026-W42']);
-    expect(previousWeeks('2027-W01', 2)).toEqual(['2026-W53', '2026-W52']);
-  });
-
-  it('keeps only the most recent weeks and skips empty plans', () => {
-    let past = { weeks: {} };
-    for (let w = 30; w < 40; w++) past = archiveWeek(past, `2026-W${w}`, [`ret-${w}`]);
-    expect(Object.keys(past.weeks)).toHaveLength(HISTORY_WEEKS);
-    expect(past.weeks['2026-W39']).toEqual(['ret-39']);
-    expect(archiveWeek(past, '2026-W40', [])).toBe(past);
   });
 });

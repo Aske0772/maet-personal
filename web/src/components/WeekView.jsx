@@ -3,24 +3,29 @@ import { DishArt } from './ui.jsx';
 import { Chevron } from './icons.jsx';
 import { priceDish, suggestions } from '../lib/pricing.js';
 import { kr, krSmall, updatedLabel, andList, partLabel } from '../lib/format.js';
-import { layoutWeek, weekMonday, DAY_SHORT, DAY_NAMES } from '../lib/week.js';
+import { layoutWeek, eveningName, eveningShort } from '../lib/week.js';
+import { addDays, dayLabel, daysBetween, parseDate, rangeLabel } from '../lib/dates.js';
 import { useHoldDrag } from '../lib/useHoldDrag.js';
 
 const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
 
-export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, onSuggest, onSwipe, onBudget, week = {} }) {
+// page: 1 = næste uge, 0 = denne uge, −n = n weeks back (pastWeek). The arrows in
+// the header move between them; this and the coming week are the ones you plan.
+export function WeekView({
+  data, plan, prefs, list, scroller, onOpen, onMove, onSuggest, onSwipe, onBudget, week = {},
+  planned, page = 0, pastWeek = null, pastCount = 0, onPage
+}) {
   const recipes = Object.fromEntries(data.recipes.map((r) => [r.id, r]));
-  const { starts, unplaced } = layoutWeek(plan);
+  const len = planned.evenings;
+  const { starts, unplaced } = layoutWeek(plan, len);
   const placed = plan.filter((p) => starts[p.id] != null);
-  const taken = Array(7).fill(false);
+  const taken = Array(len).fill(false);
   for (const p of placed) for (let d = starts[p.id]; d < starts[p.id] + p.days; d++) taken[d] = true;
   const evenings = taken.filter(Boolean).length;
 
   // Dates for the day labels, and which evening is tonight.
-  const monday = weekMonday(data.week);
-  const dates = Array.from({ length: 7 }, (_, i) => (monday ? new Date(monday.getFullYear(), monday.getMonth(), monday.getDate() + i) : null));
-  const now = new Date();
-  const today = dates.findIndex((d) => d && d.toDateString() === now.toDateString());
+  const dates = Array.from({ length: len }, (_, i) => parseDate(addDays(planned.start, i)));
+  const today = daysBetween(planned.start, planned.today);
 
   // Dishes that reuse what the week already buys, for one evening at the usual head count.
   const ideas = suggestions(data, plan, {
@@ -32,9 +37,9 @@ export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, on
   const flipFrom = useRef(null);
   const dayAt = (y) => {
     const rows = [...(gridRef.current?.querySelectorAll('[data-day]') ?? [])].map((el) => el.getBoundingClientRect());
-    if (!rows.length || y < rows[0].top - 48 || y > rows[6].bottom + 48) return null;
+    if (!rows.length || y < rows[0].top - 48 || y > rows.at(-1).bottom + 48) return null;
     const i = rows.findIndex((r) => y < r.bottom + 4);
-    return i === -1 ? 6 : i;
+    return i === -1 ? rows.length - 1 : i;
   };
   // Measure every card before the move, then slide them from there to their new evening.
   const drop = (id, day) => {
@@ -64,7 +69,7 @@ export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, on
   }, [plan]);
 
   const { drag, bind } = useHoldDrag({ scroller, dayAt, onDrop: drop });
-  const target = drag?.target != null ? Math.max(0, Math.min(drag.target, 7 - drag.span)) : null;
+  const target = drag?.target != null ? Math.max(0, Math.min(drag.target, len - drag.span)) : null;
 
   const card = (item, start) => {
     const recipe = recipes[item.recipeId];
@@ -73,7 +78,7 @@ export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, on
     const share = list.shares[item.id] ?? priceDish(data, recipe, { ...item, atHome: prefs.atHome, stores: prefs.stores }).total;
     const when = start == null
       ? `${item.days} ${item.days === 1 ? 'dag' : 'dage'}`
-      : item.days === 1 ? DAY_NAMES[start] : `${DAY_SHORT[start]}–${DAY_SHORT[start + item.days - 1]}`;
+      : item.days === 1 ? eveningName(planned.start, start) : `${eveningShort(planned.start, start)}–${eveningShort(planned.start, start + item.days - 1)}`;
     return (
       <button
         type="button" className="week-item" onClick={() => onOpen(recipe, item)}
@@ -91,20 +96,40 @@ export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, on
     );
   };
 
+  const head = (
+    <WeekNav
+      page={page} pastCount={pastCount} onPage={onPage}
+      title={page === 1 ? 'Næste uge' : page === 0 ? 'Denne uge' : rangeLabel(pastWeek.start, pastWeek.len)}
+      sub={page >= 0 ? `${rangeLabel(planned.start, len)} · ${evenings} af ${len} aftener` : pastSub(pastWeek)}
+    />
+  );
+
+  if (page < 0) {
+    return (
+      <div className="page">
+        {head}
+        <PastWeek entry={pastWeek} recipes={recipes} into={planned.next ? 'næste uge' : 'denne uge'} onOpen={onSuggest} />
+      </div>
+    );
+  }
+
   return (
     <div className="page">
-      <header className="page-head">
-        <h1>Ugen</h1>
-        <span className="muted">{evenings} af 7 aftener</span>
-      </header>
-      <div className="week-bar" aria-hidden="true">
+      {head}
+      <div className="week-bar" aria-hidden="true" style={{ gridTemplateColumns: `repeat(${len}, 1fr)` }}>
         {taken.map((on, i) => <span key={i} className={on ? 'is-on' : ''} />)}
       </div>
 
       {plan.length === 0 ? (
         <div className="empty">
-          <p>Ingen retter endnu.</p>
-          <button type="button" className="primary" onClick={onSwipe}>Find ugens retter</button>
+          <p>{planned.next ? 'Ingen retter i næste uge endnu.' : 'Ingen retter endnu.'}</p>
+          {planned.ahead && (
+            <p className="small">Du handler {dayLabel(planned.start)}, så priserne er dem, der gælder den dag.</p>
+          )}
+          {planned.missing?.length > 0 && (
+            <p className="small">Den nye avis er ikke ude endnu hos {andList(planned.missing.map((s) => s.name))}.</p>
+          )}
+          <button type="button" className="primary" onClick={onSwipe}>{planned.next ? 'Find retter til næste uge' : 'Find ugens retter'}</button>
         </div>
       ) : (
         <>
@@ -120,13 +145,13 @@ export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, on
             <Budget budget={prefs.budget} total={list.total} onChange={onBudget} />
           </div>
           <div className={`week-grid ${drag ? 'is-dragging' : ''}`} ref={gridRef}>
-            {DAY_SHORT.map((name, i) => (
+            {dates.map((date, i) => (
               <div
-                key={name} data-day={i} style={{ gridRow: i + 1 }}
+                key={i} data-day={i} style={{ gridRow: i + 1 }}
                 className={`week-day ${i === today ? 'is-today' : ''} ${target != null && i >= target && i < target + drag.span ? 'is-target' : ''}`}
               >
-                <span>{name}</span>
-                {dates[i] && <small>{i === today ? 'i dag' : `${dates[i].getDate()}.`}</small>}
+                <span>{eveningShort(planned.start, i)}</span>
+                <small>{i === today ? 'i dag' : `${date.getDate()}.`}</small>
               </div>
             ))}
             {taken.map((on, i) => !on && (
@@ -187,6 +212,88 @@ export function WeekView({ data, plan, prefs, list, scroller, onOpen, onMove, on
         </>
       )}
     </div>
+  );
+}
+
+// ‹ Denne uge › – back through the history, forward to the coming week.
+function WeekNav({ page, pastCount, onPage, title, sub }) {
+  return (
+    <header className="page-head week-nav">
+      <button type="button" className="round" aria-label="Ugen før" disabled={-page >= pastCount} onClick={() => onPage(page - 1)}>
+        <Chevron size={20} className="flip" />
+      </button>
+      <div className="week-nav-title" aria-live="polite">
+        <h1>{title}</h1>
+        <span className="muted small">{sub}</span>
+      </div>
+      <button type="button" className="round" aria-label="Ugen efter" disabled={page >= 1} onClick={() => onPage(page + 1)}>
+        <Chevron size={20} />
+      </button>
+    </header>
+  );
+}
+
+const pastSub = (w) => {
+  const n = w.plan.length;
+  return `${n} ${n === 1 ? 'ret' : 'retter'}${w.total != null ? ` · ${kr(w.total)}` : ''}`;
+};
+
+// A week that has ended: what you made and what it cost. Tap a dish to put it in
+// the week you plan now.
+function PastWeek({ entry, recipes, into, onOpen }) {
+  const plan = entry.plan.filter((p) => recipes[p.recipeId]);
+  // Weeks from before dates were kept have dishes but no evenings.
+  const withDays = plan.every((p) => p.days);
+  const { starts } = withDays ? layoutWeek(plan, entry.len) : { starts: {} };
+  const row = (item, start) => {
+    const recipe = recipes[item.recipeId];
+    const when = start == null ? null : item.days === 1 ? eveningName(entry.start, start) : `${eveningShort(entry.start, start)}–${eveningShort(entry.start, start + item.days - 1)}`;
+    return (
+      <button type="button" className="week-item" onClick={() => onOpen(recipe)} aria-label={`${recipe.title}. Lav den igen i ${into}`}>
+        <DishArt recipe={recipe} className="week-bg" />
+        <span className="week-shade" aria-hidden="true" />
+        <span className="week-text">
+          <span className="week-title">{recipe.title}</span>
+          {item.days && <span className="muted small">{[when, `${item.people} pers.`].filter(Boolean).join(' · ')}</span>}
+        </span>
+        <Chevron size={18} className="muted" />
+      </button>
+    );
+  };
+
+  if (plan.length === 0) return <div className="empty"><p>Ingen retter fra den uge.</p></div>;
+  return (
+    <>
+      {entry.total != null && (
+        <div className="summary">
+          <div className="summary-total">{kr(entry.total)}</div>
+          {entry.meals > 0 && (
+            <div className="summary-sub"><strong>{krSmall(entry.perMeal)}</strong> pr. person pr. måltid · {entry.meals} måltider</div>
+          )}
+          <div className="summary-fresh">Priserne, som de var i ugen</div>
+        </div>
+      )}
+      {withDays ? (
+        <div className="week-grid">
+          {Array.from({ length: entry.len }, (_, i) => (
+            <div key={i} className="week-day" style={{ gridRow: i + 1 }}>
+              <span>{eveningShort(entry.start, i)}</span>
+              <small>{parseDate(addDays(entry.start, i)).getDate()}.</small>
+            </div>
+          ))}
+          {plan.filter((p) => starts[p.id] != null).map((item) => (
+            <div key={item.id} className="week-slot" style={{ gridRow: `${starts[item.id] + 1} / span ${item.days}` }}>
+              {row(item, starts[item.id])}
+            </div>
+          ))}
+        </div>
+      ) : (
+        <ul className="week-list">
+          {plan.map((item) => <li key={item.id}>{row(item, null)}</li>)}
+        </ul>
+      )}
+      <p className="muted small center">Tryk på en ret for at lave den igen i {into}.</p>
+    </>
   );
 }
 

@@ -4,7 +4,9 @@ import { openDb } from '../src/db.js';
 import { refreshWeek, weekPayload, catalogPayload, weekKey, offerKind } from '../src/week.js';
 
 const day = 86400000;
-const at = (offsetDays) => new Date(Date.now() + offsetDays * day).toISOString();
+// One base time, so offers in the same avis share their dates to the millisecond.
+const NOW = Date.now();
+const at = (offsetDays) => new Date(NOW + offsetDays * day).toISOString();
 const offer = (id, storeId, heading, price, kg, runFrom = at(-1), runTill = at(5)) => ({
   id, storeId, heading, description: '', price, prePrice: null,
   quantity: kg ? { unit: 'kg', amount: kg } : null, image: null, runFrom, runTill
@@ -51,7 +53,7 @@ test('refreshWeek stores matched offers and the dishes they unlock', async () =>
   assert.equal(payload.offers.kyllingebryst.length, 1);
   assert.equal(payload.offers.kyllingebryst[0].amount, 400);
   assert.equal(payload.offers.kyllingebryst[0].kind, 'tilbud');
-  assert.equal(payload.offers.laks[0].store, '11deC');
+  assert.ok(payload.offers.laks.some((o) => o.store === '11deC'));
   assert.equal(Object.values(payload.offers).flat().some((o) => o.title.includes('chips')), false);
 
   const inWeek = payload.recipes.filter((r) => r.inWeek).map((r) => r.id);
@@ -62,28 +64,51 @@ test('refreshWeek stores matched offers and the dishes they unlock', async () =>
   assert.equal(payload.stores.find((s) => s.id === '9ba51').offerCount, 3);
 });
 
-test('the catalog holds every item valid now, also those no recipe uses', async () => {
+test('the catalog holds every item that has not ended, also those no recipe uses', async () => {
   const db = openDb(':memory:');
   const { items } = catalogPayload(db, await refresh(db));
   const ids = items.map((i) => i.id);
   assert.ok(ids.includes('b'), 'chips are kept');
   assert.ok(ids.includes('tv'), 'so is the TV');
   assert.ok(ids.includes('rema-1') && ids.includes('lidl-1'), 'shelf products are kept');
-  assert.ok(!ids.includes('expired') && !ids.includes('future'));
-  assert.deepEqual(items.find((i) => i.id === 'b'), {
+  assert.ok(!ids.includes('expired'));
+  assert.ok(ids.includes('future'), 'next week\'s avis is searchable for the coming week');
+  const b = items.find((i) => i.id === 'b');
+  assert.deepEqual(b, {
     id: 'b', store: '9ba51', title: 'Lays chips', price: 12, prePrice: null,
-    amount: 0.175, unit: 'kg', until: items.find((i) => i.id === 'b').until, kind: 'tilbud', ing: null, cat: 'snacks'
+    amount: 0.175, unit: 'kg', from: b.from, until: b.until, kind: 'tilbud', ing: null, cat: 'snacks'
   });
   // A product that is a recipe ingredient says which, so it can join that line on the list.
   assert.ok(items.some((i) => i.ing === 'ris'), 'rice on the shelf is the ingredient ris');
 });
 
-test('only prices valid right now are sent', async () => {
+test('ended prices are left out, coming ones are sent with their dates', async () => {
   const db = openDb(':memory:');
   const payload = weekPayload(db, await refresh(db));
-  const ids = Object.values(payload.offers).flat().map((o) => o.id);
-  assert.ok(!ids.includes('expired'));
-  assert.ok(!ids.includes('future'));
+  const all = Object.values(payload.offers).flat();
+  assert.ok(!all.some((o) => o.id === 'expired'));
+  const future = all.find((o) => o.id === 'future');
+  assert.ok(future, 'next week\'s laks is sent');
+  assert.ok(Date.parse(future.from) > Date.now(), 'with the day it starts');
+  // Only what runs now counts as this week's tilbud.
+  assert.equal(payload.stores.find((s) => s.id === '9ba51').offerCount, 3);
+});
+
+test('each store says when its avis runs, now and coming', async () => {
+  const db = openDb(':memory:');
+  const payload = weekPayload(db, await refresh(db));
+  const netto = payload.stores.find((s) => s.id === '9ba51').avis;
+  assert.equal(netto.length, 2);
+  assert.ok(Date.parse(netto[0].from) < Date.now() && netto[0].count === 3);
+  assert.ok(Date.parse(netto[1].from) > Date.now() && netto[1].count === 1);
+  assert.deepEqual(payload.stores.find((s) => s.id === 'nemlig').avis, []);
+});
+
+test('a price starting after the coming week is not sent yet', async () => {
+  const db = openDb(':memory:');
+  const late = offer('late', '9ba51', 'Dansk laksefilet', 45, 0.5, at(12), at(19));
+  const payload = weekPayload(db, await refresh(db, { fetchOffers: async (id) => [...(FAKE[id] ?? []), ...(id === '9ba51' ? [late] : [])] }));
+  assert.ok(!Object.values(payload.offers).flat().some((o) => o.id === 'late'));
 });
 
 test('catalog and shelf prices are kept, labelled by kind', async () => {

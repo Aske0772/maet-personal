@@ -210,6 +210,11 @@ function carryForward(db, week, storeId, group, nowIso) {
 }
 
 const ACTIVE = '(o.run_from IS NULL OR o.run_from <= ?) AND (o.run_till IS NULL OR o.run_till > ?)';
+// The app plans the coming week too, so it gets every price that has not ended and
+// starts within this many days: next week's avis is in it once a chain publishes it.
+// The client picks the prices valid on the day you shop (web/src/lib/dates.js).
+export const UPCOMING_DAYS = 10;
+const upcoming = (now) => new Date(Date.parse(now) + UPCOMING_DAYS * 86400000).toISOString();
 
 // A dish makes this week's deck when a hero ingredient is in a running avis tilbud.
 function storeWeekRecipes(db, week, now = new Date().toISOString()) {
@@ -244,10 +249,12 @@ function imageFor(id) {
 }
 
 // Everything the client needs to price dishes for any store selection.
-// Only prices that are valid right now are included.
+// Prices that have ended are left out; those starting within UPCOMING_DAYS are sent
+// with their dates, so the coming week can be priced for the day you shop.
 export function weekPayload(db, week) {
   const meta = db.prepare('SELECT * FROM weeks WHERE week = ?').get(week);
   const now = new Date().toISOString();
+  const horizon = upcoming(now);
 
   const counts = Object.fromEntries(
     db.prepare(`SELECT store_id, COUNT(*) AS n FROM offers o WHERE week = ? AND kind = 'tilbud' AND ${ACTIVE} GROUP BY store_id`)
@@ -257,10 +264,17 @@ export function weekPayload(db, week) {
     db.prepare(`SELECT store_id, COUNT(*) AS n FROM offers o WHERE week = ? AND kind = 'hylde' AND ${ACTIVE} GROUP BY store_id`)
       .all(week, now, now).map((r) => [r.store_id, r.n])
   );
+  // Each chain's avis periods (now and coming), so the app can say when an avis starts
+  // and whether the one for your shopping day is out yet.
+  const avis = {};
+  for (const r of db.prepare(`
+    SELECT store_id, run_from, run_till, COUNT(*) AS n FROM offers o
+    WHERE week = ? AND kind = 'tilbud' AND ${ACTIVE} GROUP BY store_id, run_from, run_till ORDER BY run_from
+  `).all(week, horizon, now)) (avis[r.store_id] ??= []).push({ from: r.run_from, until: r.run_till, count: r.n });
   // Chains dropped from STORES may linger in an old database; they are not sent.
   const stores = db.prepare('SELECT * FROM stores').all()
     .filter((s) => STORES.some((x) => x.id === s.id))
-    .map((s) => ({ ...s, offerCount: counts[s.id] ?? 0, shelfCount: shelfCounts[s.id] ?? 0 }))
+    .map((s) => ({ ...s, offerCount: counts[s.id] ?? 0, shelfCount: shelfCounts[s.id] ?? 0, avis: avis[s.id] ?? [] }))
     .sort((a, b) => STORES.findIndex((x) => x.id === a.id) - STORES.findIndex((x) => x.id === b.id));
 
   const offers = {};
@@ -269,7 +283,7 @@ export function weekPayload(db, week) {
            o.pre_price, o.run_from, o.run_till, o.kind, o.size_amount, o.size_unit
     FROM offer_matches m JOIN offers o ON o.id = m.offer_id AND o.week = m.week
     WHERE m.week = ? AND ${ACTIVE}
-  `).all(week, now, now);
+  `).all(week, horizon, now);
   const shelf = {};
   for (const r of rows) {
     const entry = {
@@ -339,7 +353,7 @@ export function pickShelf(list) {
   return picked;
 }
 
-// Every food item valid right now, for "Tilføj vare": people search it and add what
+// Every item valid now or starting within UPCOMING_DAYS, for "Tilføj vare": people search it and add what
 // a recipe doesn't cover. Kept apart from weekPayload so the week loads fast and the
 // catalog is fetched only when someone opens the search.
 function ingredientOf(r) {
@@ -355,15 +369,15 @@ function ingredientOf(r) {
 export function catalogPayload(db, week, store = null) {
   const now = new Date().toISOString();
   const items = db.prepare(`
-    SELECT o.id, o.store_id, o.heading, o.price, o.pre_price, o.size_amount, o.size_unit, o.run_till, o.kind, o.cat, o.food
+    SELECT o.id, o.store_id, o.heading, o.price, o.pre_price, o.size_amount, o.size_unit, o.run_from, o.run_till, o.kind, o.cat, o.food
     FROM offers o WHERE o.week = ? AND ${ACTIVE} AND (? IS NULL OR o.store_id = ?)
     ORDER BY o.heading
-  `).all(week, now, now, store, store).map((r) => {
+  `).all(week, upcoming(now), now, store, store).map((r) => {
     // The recipe ingredient this product is, so an added agurk joins the agurk line.
     const ing = ingredientOf(r);
     return {
       id: r.id, store: r.store_id, title: r.heading, price: r.price, prePrice: r.pre_price,
-      amount: r.size_amount, unit: r.size_unit, until: r.run_till, kind: r.kind, ing,
+      amount: r.size_amount, unit: r.size_unit, from: r.run_from, until: r.run_till, kind: r.kind, ing,
       // The shop's own aisle for non-food; for food the ingredient's or the name's.
       cat: r.food === 0 ? r.cat ?? 'andet' : ing ? shelfCategory(r.heading, ing) : r.cat ?? shelfCategory(r.heading, null)
     };

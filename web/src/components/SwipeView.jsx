@@ -29,7 +29,7 @@ const passes = (filter, recipe, saved, home) => {
   return filter === 'alle' || recipe.diet === filter;
 };
 
-export function SwipeView({ data, prefs, setPrefs, plan = [], seen, past, week = {}, budgetLeft = null, onSkip, onLike, onUndo, canUndo, onOpen, onStores, onReset }) {
+export function SwipeView({ data, prefs, setPrefs, plan = [], seen, recent, planned = {}, week = {}, budgetLeft = null, onSkip, onLike, onUndo, canUndo, onOpen, onStores, onReset }) {
   const storesById = useMemo(() => Object.fromEntries(data.stores.map((s) => [s.id, s])), [data]);
   const filter = FILTERS.some((f) => f.id === prefs.diet) ? prefs.diet : 'alle';
   const saved = prefs.saved ?? [];
@@ -59,8 +59,8 @@ export function SwipeView({ data, prefs, setPrefs, plan = [], seen, past, week =
         return { recipe: r, heroes: heroOffers(data, r, prefs.stores), price: reuses ? reuses.perMeal : price, reuses, home };
       });
     if (filter === 'gemte') return items.sort((a, b) => a.price - b.price);
-    return rankDeck(data, items.filter((x) => x.heroes.length > 0 || x.reuses || x.home.length > 0), { week: data.week, past });
-  }, [data, plan, prefs.stores, prefs.people, prefs.atHome, week.adjust, week.homeLeft, filter, saved, seen, past]);
+    return rankDeck(data, items.filter((x) => x.heroes.length > 0 || x.reuses || x.home.length > 0), { recent });
+  }, [data, plan, prefs.stores, prefs.people, prefs.atHome, week.adjust, week.homeLeft, filter, saved, seen, recent]);
 
   const [fling, setFling] = useState(null);
   const top = deck[0];
@@ -90,7 +90,10 @@ export function SwipeView({ data, prefs, setPrefs, plan = [], seen, past, week =
   return (
     <div className="swipe-view">
       <header className="topbar">
-        <div className="brand">Mæt</div>
+        <div className="topbar-brand">
+          <div className="brand">Mæt</div>
+          {planned.next && <span className="week-tag">Næste uge</span>}
+        </div>
         <button type="button" className="pill" onClick={onStores}>
           <Store size={18} />
           {prefs.stores.length === 1 ? storesById[prefs.stores[0]]?.name : `${prefs.stores.length} butikker`}
